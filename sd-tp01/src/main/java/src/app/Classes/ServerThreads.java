@@ -40,9 +40,9 @@ public class ServerThreads extends Thread {
     /**
      * Method to clear the terminal
      */
-    private static void clearTerminal() {
+    private void clearTerminal() {
         for (int i = 0; i < 30; i++) {
-            //this.out.println();
+            this.out.println();
         }
     }
 
@@ -103,7 +103,7 @@ public class ServerThreads extends Thread {
                 option = getMenuOption(List.of(0, 1, 2), List.of("Exit", "Register", "Login"));
                 switch (option) {
                     case 1:
-                        //clearTerminal();
+                        this.clearTerminal();
 
                         this.out.println("Enter your username:");
                         String username = scanner.next();
@@ -111,12 +111,12 @@ public class ServerThreads extends Thread {
                         String password = scanner.next();
                         registerUser(new User(username, password, "Private"));
 
-                        //clearTerminal();
+                        this.clearTerminal();
 
                         this.out.println("User array:\n {\n" + this.users.toString() + "\n}");
                         break;
                     case 2:
-                        clearTerminal();
+                        this.clearTerminal();
 
                         this.out.println("Enter your username:");
                         username = scanner.next();
@@ -124,7 +124,7 @@ public class ServerThreads extends Thread {
                         password = scanner.next();
                         loginUser(username, password);
 
-                        clearTerminal();
+                        this.clearTerminal();
 
                         this.out.println("User logged in successfully.");
                         break;
