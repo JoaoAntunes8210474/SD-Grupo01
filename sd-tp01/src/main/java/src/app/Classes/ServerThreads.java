@@ -1,6 +1,7 @@
 package src.app.Classes;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 import java.util.Scanner;
@@ -15,6 +16,9 @@ public class ServerThreads extends Thread {
     // Socket to connect to the server
     private Socket clientSocket;
 
+    // PrintWriter to write to the client's input stream
+    private PrintWriter out;
+
     // List to store registered users
     private List<User> users;
 
@@ -26,6 +30,7 @@ public class ServerThreads extends Thread {
         this.clientSocket = clientSocket;
         this.users = users;
         try {
+            this.out = new PrintWriter(clientSocket.getOutputStream(), true);
             this.scanner = new Scanner(clientSocket.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
@@ -37,7 +42,7 @@ public class ServerThreads extends Thread {
      */
     private static void clearTerminal() {
         for (int i = 0; i < 30; i++) {
-            System.out.println();
+            //this.out.println();
         }
     }
 
@@ -51,9 +56,9 @@ public class ServerThreads extends Thread {
     private int getMenuOption(List<Integer> options, List<String> messages) {
         int option = -1;
         while (option < 0 || option > options.size()) {
-            System.out.println("Choose an option:");
+            this.out.println("Choose an option:");
             for (int i = 0; i < options.size(); i++) {
-                System.out.println(options.get(i) + " - " + messages.get(i));
+                this.out.println(options.get(i) + " - " + messages.get(i));
             }
             option = scanner.nextInt();
         }
@@ -67,7 +72,7 @@ public class ServerThreads extends Thread {
      */
     private void registerUser(User user) {
         this.users.add(user);
-        System.out.println("User " + user.getName() + " registered successfully.");
+        this.out.println("User " + user.getName() + " registered successfully.");
     }
 
     /**
@@ -80,11 +85,11 @@ public class ServerThreads extends Thread {
     private boolean loginUser(String username, String password) {
         for (User user : users) {
             if (user.getName().equals(username) && user.getPassword().equals(password)) {
-                System.out.println("User " + username + " logged in successfully.");
+                this.out.println("User " + username + " logged in successfully.");
                 return true;
             }
         }
-        System.out.println("Invalid username or password.");
+        this.out.println("Invalid username or password.");
         return false;
     }
 
@@ -98,30 +103,30 @@ public class ServerThreads extends Thread {
                 option = getMenuOption(List.of(0, 1, 2), List.of("Exit", "Register", "Login"));
                 switch (option) {
                     case 1:
-                        clearTerminal();
+                        //clearTerminal();
 
-                        System.out.println("Enter your username:");
+                        this.out.println("Enter your username:");
                         String username = scanner.next();
-                        System.out.println("Enter your password:");
+                        this.out.println("Enter your password:");
                         String password = scanner.next();
                         registerUser(new User(username, password, "Private"));
 
-                        clearTerminal();
+                        //clearTerminal();
 
-                        System.out.println("User array:\n {\n" + this.users.toString() + "\n}");
+                        this.out.println("User array:\n {\n" + this.users.toString() + "\n}");
                         break;
                     case 2:
                         clearTerminal();
 
-                        System.out.println("Enter your username:");
+                        this.out.println("Enter your username:");
                         username = scanner.next();
-                        System.out.println("Enter your password:");
+                        this.out.println("Enter your password:");
                         password = scanner.next();
                         loginUser(username, password);
 
                         clearTerminal();
 
-                        System.out.println("User logged in successfully.");
+                        this.out.println("User logged in successfully.");
                         break;
                     default:
                         break;

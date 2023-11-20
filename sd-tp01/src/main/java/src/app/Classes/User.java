@@ -60,11 +60,7 @@ public class User implements IUser{
      * @param password the new password of the client
      */
     public void setPassword(String password) {
-        if (password.length() >= 8) {
-            this.password = password;
-        } else {
-            System.out.println("Password must have at least 8 characters.");
-        }
+        this.password = password;
     }
 
     /**
