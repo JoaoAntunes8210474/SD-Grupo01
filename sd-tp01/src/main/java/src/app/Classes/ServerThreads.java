@@ -66,16 +66,6 @@ public class ServerThreads extends Thread {
     }
 
     /**
-     * Method to register a user
-     * 
-     * @param user user to be registered
-     */
-    private void registerUser(User user) {
-        this.users.add(user);
-        this.out.println("User " + user.getName() + " registered successfully.");
-    }
-
-    /**
      * Method to login a user
      * 
      * @param username username of the user's possible account
@@ -107,13 +97,41 @@ public class ServerThreads extends Thread {
 
                         this.out.println("Enter your username:");
                         String username = scanner.next();
+
                         this.out.println("Enter your password:");
                         String password = scanner.next();
-                        registerUser(new User(username, password, "Private"));
+
+                        String rank;
+                        boolean isValidRank = false;
+                        do {
+                            this.out.println("Enter your rank:");
+                            rank = scanner.next();
+                            rank = rank.toLowerCase();
+
+                            switch (rank) {
+                                case "private":
+                                    isValidRank = true;
+                                    break;
+                                case "sergeant":
+                                    isValidRank = true;
+                                    break;
+                                case "general":
+                                    isValidRank = true;
+                                    break;
+                                default:
+                                    isValidRank = false;
+                                    break;
+                            }
+
+                            if (!isValidRank) {
+                                this.out.println("Invalid rank.\nExisting ranks: Private, Sergeant or General.");
+                            }
+
+                        } while (!isValidRank);
+
+                        AuthHandler.registerUser(username, password, rank);
 
                         this.clearTerminal();
-
-                        this.out.println("User array:\n {\n" + this.users.toString() + "\n}");
                         break;
                     case 2:
                         this.clearTerminal();
@@ -122,11 +140,18 @@ public class ServerThreads extends Thread {
                         username = scanner.next();
                         this.out.println("Enter your password:");
                         password = scanner.next();
-                        loginUser(username, password);
+                        boolean isLoggedIn = AuthHandler.verifyLogin(username, password);
 
-                        this.clearTerminal();
+                        if (!isLoggedIn) {
+                            this.out.println("Credentials are incorrect.");
+                            break;
+                        } else {
+                            this.clearTerminal();
+                            this.out.println("User logged in successfully.");
+                            int option2 = getMenuOption(List.of(0, 1, 2), List.of("Exit", "Register", "Login"));
+                            //metodo que recebe option2 e faz o que tem a fazer PARA N DAR CLUTTER NO CODIGO
+                        }
 
-                        this.out.println("User logged in successfully.");
                         break;
                     default:
                         break;
