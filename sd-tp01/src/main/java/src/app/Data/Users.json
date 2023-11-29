@@ -1,0 +1,29 @@
+{
+  "users": [
+    {
+      "password": "vitor",
+      "name": "vtitor",
+      "rank": "private"
+    },
+    {
+      "password": "joao",
+      "name": "joaao",
+      "rank": "private"
+    },
+    {
+      "password": "filipa",
+      "name": "jofilipa",
+      "rank": "general"
+    },
+    {
+      "password": "joao",
+      "name": "joao",
+      "rank": "private"
+    },
+    {
+      "password": "vitor",
+      "name": "vitor",
+      "rank": "private"
+    }
+  ]
+}

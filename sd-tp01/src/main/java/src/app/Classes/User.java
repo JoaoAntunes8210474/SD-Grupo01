@@ -6,7 +6,7 @@ import src.app.Interfaces.IUser;
  * User class
  * @implements IUser
  */
-public class User implements IUser{
+public abstract class User implements IUser{
     // Attributes
     private String name;
 
