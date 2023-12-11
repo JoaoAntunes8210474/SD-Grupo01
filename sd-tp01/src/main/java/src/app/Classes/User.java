@@ -1,5 +1,7 @@
 package src.app.Classes;
 
+import java.util.List;
+
 import src.app.Interfaces.IUser;
 
 /**
@@ -9,10 +11,9 @@ import src.app.Interfaces.IUser;
 public abstract class User implements IUser{
     // Attributes
     private String name;
-
     private String password;
-
     private String rank;
+    private List<Message> messages;  // List to store messages
 
     // Constructor Method
     public User(String name, String password, String rank) {
