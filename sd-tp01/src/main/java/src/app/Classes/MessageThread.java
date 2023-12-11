@@ -16,7 +16,7 @@ public class MessageThread extends Thread {
         this.sender = sender;
         this.recipient = recipient;
         this.content = content;
-    }
+    } 
 
     @Override
     public void run() {
