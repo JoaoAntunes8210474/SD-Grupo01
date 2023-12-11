@@ -24,6 +24,36 @@
       "password": "vitor",
       "name": "vitor",
       "rank": "private"
+    },
+    {
+      "password": "vitor",
+      "name": "dviotr",
+      "rank": "private"
+    },
+    {
+      "password": "felix",
+      "name": "vfelix",
+      "rank": "private"
+    },
+    {
+      "password": "pedroro",
+      "name": "pedroro",
+      "rank": "private"
+    },
+    {
+      "password": "pedro",
+      "name": "pedro",
+      "rank": "private"
+    },
+    {
+      "password": "serafim",
+      "name": "sre",
+      "rank": "private"
+    },
+    {
+      "password": "batista",
+      "name": "batista",
+      "rank": "private"
     }
   ]
 }

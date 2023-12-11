@@ -65,66 +65,105 @@ public class AuthHandler {
      * @param name     The name of the user.
      * @param password The password of the user.
      */
-    public static void registerUser(String name, String password, String rank) {
+    public static boolean registerUser(String name, String password, String rank) {
+        if (verifyCredentials(name)) {
+            System.out.println("Username already exists!");
+            return false;
+        } else {
+            try {
+                Path path = Path.of("sd-tp01/src/main/java/src/app/Data/Users.json");
+                File file = new File(path.toString());
+
+                // Check if the file is empty
+                long fileSize = Files.size(path);
+
+                JSONObject jsonObject;
+                JSONArray jsonUsers;
+
+                // Use try-with-resources to automatically close the FileReader
+                FileReader fileReader = new FileReader(file);
+                JSONParser jsonParser = new JSONParser();
+
+                // Check if the file is empty
+                if (fileSize == 0) {
+                    // File is empty, initialize a new JSON structure
+                    jsonObject = new JSONObject();
+                    jsonUsers = new JSONArray();
+                } else {
+                    // File is not empty, parse the existing JSON content
+                    jsonObject = (JSONObject) jsonParser.parse(fileReader);
+                    jsonUsers = (JSONArray) jsonObject.get("users");
+                }
+
+                // Sanitize the input, removing non-printable characters and backspaces
+                String sanitizedName = name.replaceAll("[^a-zA-Z0-9]", "");
+                String sanitizedPassword = password.replaceAll("[^a-zA-Z0-9]", "");
+
+                JSONObject newUser = new JSONObject();
+                newUser.put("name", sanitizedName);
+                newUser.put("password", sanitizedPassword);
+                newUser.put("rank", rank);
+
+                jsonUsers.add(newUser);
+
+                jsonObject.put("users", jsonUsers);
+
+                // Use GsonBuilder to set formatting options for better indentation
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+                // Beautify the JSON before writing it to the file
+                // by adding newlines and indentation
+                String prettyJson = gson.toJson(jsonObject);
+
+                // Use try-with-resources to automatically close the FileWriter
+                FileWriter fileWriter = new FileWriter(file);
+                fileWriter.write(prettyJson);
+
+                fileWriter.close();
+                fileReader.close();
+
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found - " + e.getMessage());
+            } catch (IOException e) {
+                System.out.println("Error reading/writing file - " + e.getMessage());
+            } catch (ParseException e) {
+                System.out.println("Parse error - " + e.getMessage());
+            }
+            return true;
+        }
+    }
+
+    private static boolean verifyCredentials(String name) {
         try {
-            Path path = Path.of("sd-tp01/src/main/java/src/app/Data/Users.json");
-            File file = new File(path.toString());
+            FileReader fileReader = new FileReader("sd-tp01/src/main/java/src/app/Data/Users.json");
 
-            // Check if the file is empty
-            long fileSize = Files.size(path);
-
-            JSONObject jsonObject;
-            JSONArray jsonUsers;
-
-            // Use try-with-resources to automatically close the FileReader
-            FileReader fileReader = new FileReader(file);
             JSONParser jsonParser = new JSONParser();
 
-            // Check if the file is empty
-            if (fileSize == 0) {
-                // File is empty, initialize a new JSON structure
-                jsonObject = new JSONObject();
-                jsonUsers = new JSONArray();
-            } else {
-                // File is not empty, parse the existing JSON content
-                jsonObject = (JSONObject) jsonParser.parse(fileReader);
-                jsonUsers = (JSONArray) jsonObject.get("users");
+            JSONObject jsonObject = (JSONObject) jsonParser.parse(fileReader);
+
+            JSONArray jsonUsers = (JSONArray) jsonObject.get("users");
+
+            for (Object object : jsonUsers) {
+                JSONObject jsonUser = (JSONObject) object;
+
+                String jsonUsername = (String) jsonUser.get("name");
+
+                if (jsonUsername.equals(name)) {
+                    return true;
+                }
             }
 
-            // Sanitize the input, removing non-printable characters and backspaces
-            String sanitizedName = name.replaceAll("[^a-zA-Z0-9]", "");
-            String sanitizedPassword = password.replaceAll("[^a-zA-Z0-9]", "");
-
-            JSONObject newUser = new JSONObject();
-            newUser.put("name", sanitizedName);
-            newUser.put("password", sanitizedPassword);
-            newUser.put("rank", rank);
-
-            jsonUsers.add(newUser);
-
-            jsonObject.put("users", jsonUsers);
-
-            // Use GsonBuilder to set formatting options for better indentation
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-            // Beautify the JSON before writing it to the file
-            // by adding newlines and indentation
-            String prettyJson = gson.toJson(jsonObject);
-
-            // Use try-with-resources to automatically close the FileWriter
-            FileWriter fileWriter = new FileWriter(file);
-            fileWriter.write(prettyJson);
-
-            fileWriter.close();
+            // Close the file reader
             fileReader.close();
-
         } catch (FileNotFoundException e) {
             System.out.println("File not found - " + e.getMessage());
         } catch (IOException e) {
-            System.out.println("Error reading/writing file - " + e.getMessage());
+            System.out.println("Error reading file - " + e.getMessage());
         } catch (ParseException e) {
             System.out.println("Parse error - " + e.getMessage());
         }
+
+        return false;
     }
 
 }
