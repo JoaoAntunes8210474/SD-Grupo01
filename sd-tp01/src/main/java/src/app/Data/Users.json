@@ -54,6 +54,11 @@
       "password": "batista",
       "name": "batista",
       "rank": "private"
+    },
+    {
+      "password": "romeu",
+      "name": "romeu",
+      "rank": "private"
     }
   ]
 }

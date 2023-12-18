@@ -6,19 +6,20 @@ import src.app.Interfaces.IUser;
 
 /**
  * User class
+ * 
  * @implements IUser
  */
-public abstract class User implements IUser{
+public abstract class User implements IUser {
     // Attributes
     private String name;
     private String password;
     private String rank;
-    private List<Message> messages;  // List to store messages
+    private List<Message> messages; // List to store messages
 
     // Constructor Method
     public User(String name, String password, String rank) {
         this.name = name;
-        setPassword(password);  // Enforce password constraints in the constructor
+        setPassword(password); // Enforce password constraints in the constructor
         this.rank = rank;
     }
 
@@ -26,6 +27,7 @@ public abstract class User implements IUser{
 
     /**
      * Get the name of the client
+     * 
      * @return the name of the client
      */
     public String getName() {
@@ -34,6 +36,7 @@ public abstract class User implements IUser{
 
     /**
      * Get the password of the client
+     * 
      * @return the password of the client
      */
     public String getPassword() {
@@ -42,6 +45,7 @@ public abstract class User implements IUser{
 
     /**
      * Get the rank of the client
+     * 
      * @return the rank of the client
      */
     public String getRank() {
@@ -50,6 +54,7 @@ public abstract class User implements IUser{
 
     /**
      * Set the name of the client
+     * 
      * @param name the new name of the client
      */
     public void setName(String name) {
@@ -58,6 +63,7 @@ public abstract class User implements IUser{
 
     /**
      * Set the password of the client
+     * 
      * @param password the new password of the client
      */
     public void setPassword(String password) {
@@ -66,6 +72,7 @@ public abstract class User implements IUser{
 
     /**
      * Set the rank of the client
+     * 
      * @param rank the new rank of the client
      */
     public void setRank(String rank) {
@@ -75,8 +82,9 @@ public abstract class User implements IUser{
     // Methods
     /**
      * Send a message to another user
+     * 
      * @param recipient the user who will receive the message
-     * @param message the message to be sent
+     * @param message   the message to be sent
      * @return the message sent
      * @throws Exception if the recipient is not a valid user
      * @throws Exception if the message is empty or too long
@@ -85,9 +93,10 @@ public abstract class User implements IUser{
     public void sendMessage(User recipient, String message) {
         System.out.println("Message sent from " + this.name + " to " + recipient.getName() + ": " + message);
     }
-    
+
     /**
      * Request a complex task (e.g., missile launch)
+     * 
      * @param approver the user who will approve the task
      * @throws Exception if the approver is not a valid user
      * 
@@ -99,9 +108,18 @@ public abstract class User implements IUser{
 
     /**
      * Method to print the user's information
+     * 
      * @return the user's information
      */
-    public String toString () {
+    public String toString() {
         return "Name: " + this.name + "\nPassword: " + this.password + "\nRank: " + this.rank + "\n";
     }
+
+    // Add this method to the User class
+    public void loadMessagesFromFile() {
+        // Implement the logic to read messages from the file
+        // Use the user's name to identify and load messages associated with the user
+        // Update the 'messages' list with the loaded messages
+    }
+
 }
