@@ -1,6 +1,16 @@
 package src.app.Classes;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import src.app.Interfaces.IUser;
 
@@ -10,6 +20,10 @@ import src.app.Interfaces.IUser;
  * @implements IUser
  */
 public abstract class User implements IUser {
+
+    // File path for storing all messages
+    private static final String MESSAGES_FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
+
     // Attributes
     private String name;
     private String password;
@@ -21,6 +35,7 @@ public abstract class User implements IUser {
         this.name = name;
         setPassword(password); // Enforce password constraints in the constructor
         this.rank = rank;
+        loadMessagesFromFile(); // Load messages from file
     }
 
     // Getters and Setters Methods
@@ -81,20 +96,6 @@ public abstract class User implements IUser {
 
     // Methods
     /**
-     * Send a message to another user
-     * 
-     * @param recipient the user who will receive the message
-     * @param message   the message to be sent
-     * @return the message sent
-     * @throws Exception if the recipient is not a valid user
-     * @throws Exception if the message is empty or too long
-     * 
-     */
-    public void sendMessage(User recipient, String message) {
-        System.out.println("Message sent from " + this.name + " to " + recipient.getName() + ": " + message);
-    }
-
-    /**
      * Request a complex task (e.g., missile launch)
      * 
      * @param approver the user who will approve the task
@@ -115,11 +116,91 @@ public abstract class User implements IUser {
         return "Name: " + this.name + "\nPassword: " + this.password + "\nRank: " + this.rank + "\n";
     }
 
-    // Add this method to the User class
+    /**
+     * Send a message to another user
+     * 
+     * @param recipient the user who will receive the message
+     * @param content   the content of the message to be sent
+     * @throws Exception if the recipient is not a valid user
+     * @throws Exception if the message is empty or too long
+     */
+    public void sendMessage(User recipient, String content) {
+        Message message = new Message(this.name, recipient.getName(), content);
+        recipient.receiveMessage(message);
+        this.messages.add(message);
+
+        System.out.println("Message sent from " + this.name + " to " + recipient.getName() + ": " + message);
+        // Optionally, you may want to save the messages to a file after sending.
+    }
+
+    // Method to receive a message
+    public void receiveMessage(Message message) {
+        // Handle the received message as needed
+        System.out.println("Message received:\n" + message);
+        // Optionally, you may want to save the messages to a file after receiving.
+    }
+
+    // Method to load messages for the authenticated user from the global
+    // Messages.json file
     public void loadMessagesFromFile() {
-        // Implement the logic to read messages from the file
-        // Use the user's name to identify and load messages associated with the user
-        // Update the 'messages' list with the loaded messages
+        try {
+            Path filePath = Path.of(MESSAGES_FILE_PATH);
+
+            if (Files.exists(filePath)) {
+                // Read all messages from the file
+                FileReader fileReader = new FileReader(filePath.toFile());
+                List<Message> allMessages = readMessagesFromJson(fileReader);
+                fileReader.close();
+
+                // Filter messages based on the authenticated user being the recipient
+                // List<Message> userMessages = allMessages.stream()
+                // .filter(message -> message.getRecipient().equals(this.name))
+                // .collect(Collectors.toList());
+
+                // Alternative way to filter messages based on the authenticated user being
+                List<Message> userMessages = new ArrayList<>();
+                for (Message message : allMessages) {
+                    if (message.getRecipient().equals(this.name)) {
+                        userMessages.add(message);
+                    }
+                }
+
+                // Update the user's messages
+                this.messages.addAll(userMessages);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Helper method to read messages from JSON
+    private List<Message> readMessagesFromJson(FileReader fileReader) {
+        List<Message> loadedMessages = new ArrayList<>();
+
+        try {
+            JSONParser jsonParser = new JSONParser();
+            JSONObject jsonObject = (JSONObject) jsonParser.parse(fileReader);
+            JSONArray jsonMessages = (JSONArray) jsonObject.get("messages");
+
+            for (Object obj : jsonMessages) {
+                JSONObject jsonMessage = (JSONObject) obj;
+                String sender = (String) jsonMessage.get("sender");
+                String recipient = (String) jsonMessage.get("recipient");
+                String content = (String) jsonMessage.get("content");
+
+                // You may need to parse the timestamp string into LocalDateTime
+                // LocalDateTime timestamp = LocalDateTime.parse((String)
+                // jsonMessage.get("timestamp"));
+
+                Message message = new Message(sender, recipient, content);
+                // message.setTimestamp(timestamp); // Set the timestamp if needed
+                loadedMessages.add(message);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return loadedMessages;
     }
 
 }
