@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.List;
 import java.util.Scanner;
 
+import src.app.Classes.Message;
+
 /**
  * ServerThreads
  * Thread to handle server functionalities
@@ -56,10 +58,12 @@ public class ServerThreads extends Thread {
     private int getMenuOption(List<Integer> options, List<String> messages) {
         int option = -1;
         while (option < 0 || option > options.size()) {
-            this.out.println("Choose an option:");
+            this.out.println("[Choose an option:]");
+            this.out.println("-----------------------");
             for (int i = 0; i < options.size(); i++) {
                 this.out.println(options.get(i) + " - " + messages.get(i));
             }
+            this.out.println("-----------------------");
             option = scanner.nextInt();
         }
         return option;
@@ -71,16 +75,16 @@ public class ServerThreads extends Thread {
     private void registerForm() {
         this.clearTerminal();
 
-        this.out.println("Enter your username:");
+        this.out.println("[Enter your username:]");
         String username = scanner.next();
 
-        this.out.println("Enter your password:");
+        this.out.println("[Enter your password:]");
         String password = scanner.next();
 
         String rank;
         boolean isValidRank = false;
         do {
-            this.out.println("Enter your rank:");
+            this.out.println("[Enter your rank:]");
             rank = scanner.next();
             rank = rank.toLowerCase();
 
@@ -100,16 +104,16 @@ public class ServerThreads extends Thread {
             }
 
             if (!isValidRank) {
-                this.out.println("Invalid rank.\nExisting ranks: Private, Sergeant or General.");
+                this.out.println("[Invalid rank.]\n[Existing ranks: Private, Sergeant or General.]");
             }
 
         } while (!isValidRank);
 
         this.clearTerminal();
         if (AuthHandler.registerUser(username, password, rank)) {
-            this.out.println("User registered successfully.");
+            this.out.println("[User registered successfully.]");
         } else {
-            this.out.println("User already exists.");
+            this.out.println("[User already exists.]");
         }
     }
 
@@ -119,18 +123,18 @@ public class ServerThreads extends Thread {
     private void loginForm() {
         this.clearTerminal();
 
-        this.out.println("Enter your username:");
+        this.out.println("[Enter your username:]");
         String username = scanner.next();
-        this.out.println("Enter your password:");
+        this.out.println("[Enter your password:]");
         String password = scanner.next();
         boolean isLoggedIn = AuthHandler.verifyLogin(username, password);
 
         if (!isLoggedIn) {
-            this.out.println("Credentials are incorrect.");
+            this.out.println("[Credentials are incorrect.]");
         } else {
             // User logged in successfully
             this.clearTerminal();
-            this.out.println("User logged in successfully.");
+            this.out.println("[User logged in successfully.]");
             userMenu(username);
         }
     }
@@ -184,11 +188,60 @@ public class ServerThreads extends Thread {
         int optionSelected = -1;
         while (optionSelected != 0) {
             optionSelected = getMenuOption(List.of(0, 1, 2),
-                    List.of("Exit", "Send Message", "List Users"));
+                    List.of("Back", "Send Message", "Received messages"));
             switch (optionSelected) {
                 case 1:
-                    this.out.println("Message:\n");
-                    // sendMessage();
+                    String recipientName = scanner.next();
+                    int counter = 1;
+                    int listIndex = 0;
+                    int selectedOption = -1;
+
+                    this.out.println("[List of registered users to send a message to:]");
+                    this.out.println("-----------------------");
+                    this.out.println("0 - Back");
+                    
+                    for (int i = 0; i < Math.min(users.size() - (listIndex * 7), 7); i++) {
+                        this.out.println(counter + " - " + users.get((listIndex * 7) + (counter - 1)).getName());
+                        counter++;
+                    }
+
+                    this.out.println("8 - Next Page");
+                    this.out.println("9 - Previous Page");
+                    this.out.println("-----------------------");
+                    this.out.println("Choose a recipient:");
+
+                    counter = 1;
+
+                    do {
+                        selectedOption = scanner.nextInt();
+                        // Empty the buffer
+                        scanner.nextLine();
+                    } while (selectedOption < 0 || selectedOption > 9);
+
+                    if (selectedOption == 8 && listIndex > 0) {
+                        listIndex--;
+                    } else if (selectedOption == 9 && selectedOption - 2 < users.size() - (listIndex * 7)) {
+                        listIndex++;
+                    } else if ((selectedOption <= Math.min(users.size() - (listIndex * 7), 7)) && selectedOption > 0) {
+                        recipientName = users.get((listIndex * 7) + (selectedOption - 1)).getName();
+                    }
+
+                    this.out.println("\nMessage Content:");
+                    String message = scanner.next();
+
+                    // Find the recipient user based on the name
+                    User recipient = findUserByName(recipientName);
+
+                    if (recipient != null) {
+                        // Send the message to the recipient
+                        recipient.registerMessage(message, username);
+                    } else {
+                        this.out.println("User not found.");
+                    }
+
+
+
+                // OPCAO VER MSG, CONSEGUIR ACEITAR PEDIDOS (SOLICITACOES) AKA MENU SOLICITACOES
                     break;
                 case 2:
                     this.out.println("Users:\n");
@@ -198,6 +251,21 @@ public class ServerThreads extends Thread {
                     break;
             }
         }
+    }
+
+    /**
+     * Find a user by name in the list of registered users
+     * 
+     * @param name the name of the user to find
+     * @return the User object if found, null otherwise
+     */
+    private User findUserByName(String name) {
+        for (User user : users) {
+            if (user.getName().equals(name)) {
+                return user;
+            }
+        }
+        return null;
     }
 
 }
