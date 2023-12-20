@@ -6,8 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -119,18 +117,15 @@ public abstract class User implements IUser {
     /**
      * Send a message to another user
      * 
-     * @param recipient the user who will receive the message
-     * @param content   the content of the message to be sent
+     * @param message the content of the message to be sent
+     * @param senderOfTheMessage the user who will send the message to this user
      * @throws Exception if the recipient is not a valid user
      * @throws Exception if the message is empty or too long
      */
-    public void sendMessage(User recipient, String content) {
-        Message message = new Message(this.name, recipient.getName(), content);
-        recipient.receiveMessage(message);
-        this.messages.add(message);
-
-        System.out.println("Message sent from " + this.name + " to " + recipient.getName() + ": " + message);
-        // Optionally, you may want to save the messages to a file after sending.
+    public void registerMessage(String message, String senderOfTheMessage) { 
+        // Write to json file the message, the sender and the recipient
+        MessageThread messageThread = new MessageThread(senderOfTheMessage, this.name, message);
+        messageThread.start();
     }
 
     // Method to receive a message
