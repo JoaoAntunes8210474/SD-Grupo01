@@ -180,7 +180,7 @@ public class ServerThreads extends Thread {
      * 
      * @param username the username of the user
      */
-    private void userMenu(String username) {    
+    private void userMenu(String username) {
         int optionSelected = -1;
         while (optionSelected != 0) {
             optionSelected = getMenuOption(List.of(0, 1, 2),
@@ -188,15 +188,16 @@ public class ServerThreads extends Thread {
             switch (optionSelected) {
                 case 1:
                     this.out.println("Message:\n");
-                    //sendMessage();
+                    // sendMessage();
                     break;
                 case 2:
                     this.out.println("Users:\n");
-                    //listAllUsers();
+                    // listAllUsers();
                     break;
                 default:
                     break;
             }
         }
     }
+
 }
