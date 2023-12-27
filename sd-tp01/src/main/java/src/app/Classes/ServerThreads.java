@@ -191,7 +191,7 @@ public class ServerThreads extends Thread {
                     List.of("Back", "Send Message", "Received messages"));
             switch (optionSelected) {
                 case 1:
-                    String recipientName = scanner.next();
+                    String recipientName = "";
                     int counter = 1;
                     int listIndex = 0;
                     int selectedOption = -1;

@@ -21,6 +21,6 @@ public interface IUser {
     public void setRank(String rank);
 
     // Methods
-    public void sendMessage(User recipient, String message);
+    public void registerMessage(String message, String senderOfTheMessage);
     public void requestComplexTask(User approver);
 }
