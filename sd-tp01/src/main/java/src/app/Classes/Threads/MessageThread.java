@@ -1,4 +1,4 @@
-package src.app.Classes;
+package src.app.Classes.Threads;
 
 import java.io.File;
 import java.io.FileReader;
@@ -13,6 +13,8 @@ import org.json.simple.parser.JSONParser;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import src.app.Classes.Models.Message;
 
 public class MessageThread extends Thread {
     private String sender;
