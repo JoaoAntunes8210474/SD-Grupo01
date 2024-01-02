@@ -76,7 +76,10 @@ public class ServerThreads extends Thread {
 
             try {
                 String userInput = scanner.nextLine();
-                option = Integer.parseInt(userInput);
+                if (userInput.contains("userInput:")) {
+                    userInput = userInput.charAt("userInput:".length()) + "";
+                    option = Integer.parseInt(userInput);
+                }
             } catch (NumberFormatException e) {
             }
         }
