@@ -6,6 +6,9 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import src.app.Classes.Models.User;
+import src.app.Classes.Threads.ServerThreads;
+
 public class Server {
     private List<User> users; // List to store registered users
 

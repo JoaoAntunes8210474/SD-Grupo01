@@ -1,4 +1,4 @@
-package src.app.Classes;
+package src.app.Classes.Threads;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

@@ -1,6 +1,6 @@
 package src.app.Interfaces;
 
-import src.app.Classes.User;
+import src.app.Classes.Models.User;
 
 /**
  * IUser

@@ -1,4 +1,4 @@
-package src.app.Classes;
+package src.app.Classes.Models;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -10,7 +10,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import src.app.Classes.Models.Message;
 import src.app.Classes.Threads.MessageThread;
 import src.app.Interfaces.IUser;
 

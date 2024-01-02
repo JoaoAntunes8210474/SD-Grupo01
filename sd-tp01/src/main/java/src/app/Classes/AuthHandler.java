@@ -16,6 +16,12 @@ import org.json.simple.parser.ParseException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import src.app.Classes.Models.General;
+import src.app.Classes.Models.Private;
+import src.app.Classes.Models.ReplyObject;
+import src.app.Classes.Models.Sergeant;
+import src.app.Classes.Models.User;
+
 public class AuthHandler {
 
     /**
@@ -24,7 +30,7 @@ public class AuthHandler {
      * @param user The user to be verified.
      * @return True if the user is registered, false otherwise.
      */
-    public static boolean verifyLogin(String username, String password) {
+    public static ReplyObject verifyLogin(String username, String password) {
         try {
             FileReader fileReader = new FileReader("sd-tp01/src/main/java/src/app/Data/Users.json");
 
@@ -39,10 +45,27 @@ public class AuthHandler {
 
                 String jsonUsername = (String) jsonUser.get("name");
                 String jsonPassword = (String) jsonUser.get("password");
+                String jsonRank = (String) jsonUser.get("rank");
 
                 if (jsonUsername.equals(username) && jsonPassword.equals(password)) {
                     System.out.println("User " + jsonUsername + " logged in successfully.");
-                    return true;
+
+                    // Create a new user object
+                    User user = null;
+
+                    switch (jsonRank) {
+                        case "Private":
+                            user = new Private(jsonUsername, jsonPassword);
+                            break;
+                        case "Sergeant":
+                            user = new Sergeant(jsonUsername, jsonPassword);
+                            break;
+                        case "General":
+                            user = new General(jsonUsername, jsonPassword);
+                            break;
+                    }
+
+                    return new ReplyObject(true, user);
                 }
             }
 
@@ -56,7 +79,7 @@ public class AuthHandler {
             System.out.println("Parse error - " + e.getMessage());
         }
 
-        return false;
+        return new ReplyObject(false);
     }
 
     /**
@@ -65,10 +88,10 @@ public class AuthHandler {
      * @param name     The name of the user.
      * @param password The password of the user.
      */
-    public static boolean registerUser(String name, String password, String rank) {
+    public static ReplyObject registerUser(String name, String password, String rank) {
         if (verifyCredentials(name)) {
             System.out.println("Username already exists!");
-            return false;
+            return new ReplyObject(false);
         } else {
             try {
                 Path path = Path.of("sd-tp01/src/main/java/src/app/Data/Users.json");
@@ -129,7 +152,7 @@ public class AuthHandler {
             } catch (ParseException e) {
                 System.out.println("Parse error - " + e.getMessage());
             }
-            return true;
+            return new ReplyObject(true);
         }
     }
 
