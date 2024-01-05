@@ -16,17 +16,13 @@ import com.google.gson.GsonBuilder;
 import src.app.Classes.Models.Message;
 
 public class MessageThread extends Thread {
-    private String sender;
-    private String recipient;
-    private String content;
+    private Message message;
 
     // File path for storing messages
     public static final String MESSAGE_FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
 
-    public MessageThread(String sender, String recipient, String content) {
-        this.sender = sender;
-        this.recipient = recipient;
-        this.content = content;
+    public MessageThread(Message message) {
+        this.message = message;
     }
 
     @SuppressWarnings("unchecked")
@@ -37,9 +33,6 @@ public class MessageThread extends Thread {
             try {
                 Path path = Path.of(MESSAGE_FILE_PATH);
                 File file = new File(path.toString());
-
-                // Create a new message
-                Message message = new Message(sender, recipient, content);
 
                 // Check if the file is empty
                 long fileSize = Files.size(path);
@@ -61,10 +54,10 @@ public class MessageThread extends Thread {
                 }
 
                 JSONObject jsonMessage = new JSONObject();
-                jsonMessage.put("sender", message.getSender());
-                jsonMessage.put("recipient", message.getRecipient());
-                jsonMessage.put("content", message.getContent());
-                jsonMessage.put("timestamp", message.getTimestamp().toString());
+                jsonMessage.put("sender", this.message.getSender());
+                jsonMessage.put("recipient", this.message.getRecipient());
+                jsonMessage.put("content", this.message.getContent());
+                jsonMessage.put("timestamp", this.message.getTimestamp().toString());
 
                 jsonMessages.add(jsonMessage);
 
@@ -79,7 +72,7 @@ public class MessageThread extends Thread {
                 // Append the JSON message to the file
                 FileWriter fileWriter = new FileWriter(file);
                 fileWriter.write(prettyJson);
-                System.out.println("Message sent:\n" + message);
+                System.out.println("Message sent:\n" + this.message);
 
                 fileReader.close();
                 fileWriter.close();

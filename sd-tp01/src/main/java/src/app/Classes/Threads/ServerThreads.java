@@ -317,12 +317,14 @@ public class ServerThreads extends Thread {
     private void sendMessage(User loggedInUser) {
         String recipientName = selectTarget(this.registeredUsers);
         if (!recipientName.isEmpty()) {
+            this.out.println("\nMessage Title:");
+            String title = scanner.next();
             this.out.println("\nMessage Content:");
-            String message = scanner.next();
+            String content = scanner.next();
             User recipient = findUserByName(recipientName);
 
             if (recipient != null) {
-                recipient.registerMessage(message, loggedInUser.getName());
+                recipient.registerMessage(title, content, loggedInUser.getName());
             } else {
                 this.out.println("User not found.");
             }

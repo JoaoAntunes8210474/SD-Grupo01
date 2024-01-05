@@ -18,18 +18,24 @@ import src.app.Classes.Threads.MessageThread;
 public class Message {
     private String sender;
     private String recipient;
+    private String title;
     private String content;
     private LocalDateTime timestamp;
 
-    public Message(String sender, String recipient, String content) {
+    public Message(String sender, String recipient, String title, String content) {
         this.sender = sender;
         this.recipient = recipient;
+        this.title = title;
         this.content = content;
         this.timestamp = LocalDateTime.now();
     }
 
     public String getSender() {
         return sender;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public String getRecipient() {
@@ -42,6 +48,27 @@ public class Message {
 
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 
     @Override
@@ -69,6 +96,7 @@ public class Message {
                 List<Message> allMessages = (List<Message>) jsonMessages.stream()
                         .map(json -> new Message((String) ((JSONObject) json).get("sender"),
                                 (String) ((JSONObject) json).get("recipient"),
+                                (String) ((JSONObject) json).get("title"),
                                 (String) ((JSONObject) json).get("content")))
                         .collect(Collectors.toList());
 

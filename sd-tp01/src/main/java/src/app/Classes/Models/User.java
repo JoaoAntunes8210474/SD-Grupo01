@@ -127,14 +127,15 @@ public abstract class User implements IUser {
     /**
      * Send a message to another user
      * 
-     * @param message            the content of the message to be sent
+     * @param content            the content of the message to be sent
      * @param senderOfTheMessage the user who will send the message to this user
      * @throws Exception if the recipient is not a valid user
      * @throws Exception if the message is empty or too long
      */
-    public void registerMessage(String message, String senderOfTheMessage) {
+    public void registerMessage(String title, String content, String senderOfTheMessage) {
         // Write to json file the message, the sender and the recipient
-        MessageThread messageThread = new MessageThread(senderOfTheMessage, this.name, message);
+        MessageThread messageThread = new MessageThread(
+                new Message(senderOfTheMessage, this.name, title, content));
         messageThread.start();
     }
 
@@ -189,13 +190,14 @@ public abstract class User implements IUser {
                 JSONObject jsonMessage = (JSONObject) obj;
                 String sender = (String) jsonMessage.get("sender");
                 String recipient = (String) jsonMessage.get("recipient");
+                String title = (String) jsonMessage.get("title");
                 String content = (String) jsonMessage.get("content");
 
                 // You may need to parse the timestamp string into LocalDateTime
                 // LocalDateTime timestamp = LocalDateTime.parse((String)
                 // jsonMessage.get("timestamp"));
 
-                Message message = new Message(sender, recipient, content);
+                Message message = new Message(sender, recipient, title, content);
                 // message.setTimestamp(timestamp); // Set the timestamp if needed
                 loadedMessages.add(message);
             }
