@@ -88,6 +88,7 @@ public class AuthHandler {
      * @param name     The name of the user.
      * @param password The password of the user.
      */
+    @SuppressWarnings("unchecked")
     public static ReplyObject registerUser(String name, String password, String rank) {
         if (verifyCredentials(name)) {
             System.out.println("Username already exists!");

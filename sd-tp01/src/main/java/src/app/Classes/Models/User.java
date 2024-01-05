@@ -67,6 +67,15 @@ public abstract class User implements IUser {
     }
 
     /**
+     * Get the messages of the client
+     * 
+     * @return the messages of the client
+     */
+    public List<Message> getMessages() {
+        return this.messages;
+    }
+
+    /**
      * Set the name of the client
      * 
      * @param name the new name of the client
@@ -118,22 +127,20 @@ public abstract class User implements IUser {
     /**
      * Send a message to another user
      * 
-     * @param message the content of the message to be sent
+     * @param message            the content of the message to be sent
      * @param senderOfTheMessage the user who will send the message to this user
      * @throws Exception if the recipient is not a valid user
      * @throws Exception if the message is empty or too long
      */
-    public void registerMessage(String message, String senderOfTheMessage) { 
+    public void registerMessage(String message, String senderOfTheMessage) {
         // Write to json file the message, the sender and the recipient
         MessageThread messageThread = new MessageThread(senderOfTheMessage, this.name, message);
         messageThread.start();
     }
 
     // Method to receive a message
-    public void receiveMessage(Message message) {
-        // Handle the received message as needed
-        System.out.println("Message received:\n" + message);
-        // Optionally, you may want to save the messages to a file after receiving.
+    public void receiveMessages() {
+        this.messages = Message.readMessagesFromFileForUser(this.name);
     }
 
     // Method to load messages for the authenticated user from the global

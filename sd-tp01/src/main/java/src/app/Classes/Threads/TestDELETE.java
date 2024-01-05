@@ -10,12 +10,10 @@ import src.app.Classes.AuthHandler;
 import src.app.Classes.Models.ReplyObject;
 import src.app.Classes.Models.User;
 
-import src.app.Interfaces.IGetName;
-
 /**
  * Class to handle the threads for the server
  */
-public class ServerThreads extends Thread {
+public class TestDELETE extends Thread {
     //// Attributes
 
     // Socket to connect to the server
@@ -43,7 +41,7 @@ public class ServerThreads extends Thread {
      * @param clientSocket the socket to connect to the server
      * @param users        the list of logged in users
      */
-    public ServerThreads(Socket clientSocket, List<User> users) {
+    public TestDELETE(Socket clientSocket, List<User> users) {
         this.clientSocket = clientSocket;
         this.loggedInUsers = users;
         this.isHeartbeatBeingRead = false;
@@ -243,9 +241,13 @@ public class ServerThreads extends Thread {
      * @param username the username of the user
      */
     private void userMenu(User loggedInUser) {
-        if (!isHeartbeatBeingRead) {
-            isHeartbeatBeingRead = true;
-            new HeartbeatReaderThread(loggedInUser, scanner, loggedInUsers).start();
+
+        // After the user logs in, start a thread to read the heartbeat in case he
+        // disconnects
+        // and we need to remove him from the list of connected users
+        if (!this.isHeartbeatBeingRead) {
+            this.isHeartbeatBeingRead = true;
+            new HeartbeatReaderThread(loggedInUser, this.scanner, this.loggedInUsers).start();
         }
 
         boolean listening = true;
@@ -253,121 +255,98 @@ public class ServerThreads extends Thread {
 
         while (optionSelected != 0) {
             if (loggedInUser.getRank().equals("General")) {
-                optionSelected = showGeneralMenu();
+                optionSelected = getMenuOption(List.of(0, 1, 2, 3, 4, 5),
+                        List.of("Back", "Send Message", "Received messages", "Solicitations", "Approvals",
+                                "Connections"));
             } else {
-                optionSelected = showRegularUserMenu();
+                optionSelected = getMenuOption(List.of(0, 1, 2, 3, 4),
+                        List.of("Back", "Send Message", "Received messages", "Solicitations", "Approvals"));
             }
 
-            handleMenuOption(loggedInUser, optionSelected, listening);
-        }
-    }
+            switch (optionSelected) {
+                case 1:
+                    String recipientName = "";
+                    do {
+                        // Passa isto para uma função privada para não ficar tudo no mesmo sítio -->
+                        int counter = 1;
+                        int listIndex = 0;
+                        int selectedOption = -1;
 
-    private int showGeneralMenu() {
-        return getMenuOption(List.of(0, 1, 2, 3, 4, 5, 6),
-                List.of("Back", "Send Message", "Reply to messages", "Received messages", "Solicitations", "Approvals",
-                        "Connections"));
-    }
+                        List<Integer> options = List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+                        List<String> messages = List.of("Back");
 
-    private int showRegularUserMenu() {
-        return getMenuOption(List.of(0, 1, 2, 3, 4, 5),
-                List.of("Back", "Send Message", "Reply to messages", "Received messages", "Solicitations",
-                        "Approvals"));
-    }
+                        this.out.println("[List of registered users to send a message to:]");
+                        this.out.println("-----------------------");
 
-    private void handleMenuOption(User loggedInUser, int optionSelected, boolean listening) {
-        switch (optionSelected) {
-            case 1:
-                sendMessage(loggedInUser);
-                break;
-            case 2:
-                this.out.println("Users:\n");
-                // listAllUsers();
-                break;
-            case 3:
-                loggedInUser.receiveMessages();
-                // CARREGOU MESSAGES AGR FALTA LISTAR (selectTarget) PARA VER
+                        for (int i = 0; i < Math.min(this.registeredUsers.size() - (listIndex * 7), 7); i++) {
+                            messages.add(counter + " - " + this.registeredUsers.get((listIndex * 7) + i).getName());
+                            counter++;
+                        }
 
-                break;
-            case 4:
-                this.out.println("JOIN_CHANNEL:" + NotifierThreads.SOLICITATIONS_MADE_CHANNELADDR);
+                        messages.add("Next Page");
+                        messages.add("Previous Page");
 
-                // Listen for inputs from the user
-                listeningToUserInputWhileInChannel(listening);
-                break;
-            case 5:
-                this.out.println("JOIN_CHANNEL:" + NotifierThreads.APPROVALS_MADE_CHANNELADDR);
+                        counter = 1;
 
-                // Listen for inputs from the user
-                listeningToUserInputWhileInChannel(listening);
-                break;
-            case 6:
-                if (loggedInUser.getRank().equals("General")) {
-                    this.out.println("JOIN_CHANNEL:" + NotifierThreads.CONNECTIONS_MADE_CHANNELADDR);
+                        do {
+                            selectedOption = getMenuOption(options, messages);
+                        } while (selectedOption < 0 || selectedOption > 9);
+
+                        if (selectedOption == 8 && listIndex > 0) {
+                            listIndex--;
+                        } else if (selectedOption == 9
+                                && selectedOption - 2 < this.registeredUsers.size() - (listIndex * 7)) {
+                            listIndex++;
+                        } else if ((selectedOption <= Math.min(this.registeredUsers.size() - (listIndex * 7), 7))
+                                && selectedOption > 0) {
+                            recipientName = this.registeredUsers.get((listIndex * 7) + (selectedOption - 1)).getName();
+                        }
+                    } while (recipientName.equals(""));
+
+                    this.out.println("\nMessage Content:");
+                    String message = scanner.next();
+
+                    // Find the recipient user based on the name
+                    User recipient = findUserByName(recipientName);
+
+                    if (recipient != null) {
+                        // Send the message to the recipient
+                        recipient.registerMessage(message, loggedInUser.getName());
+                    } else {
+                        this.out.println("User not found.");
+                    }
+
+                    // OPCAO VER MSG, CONSEGUIR ACEITAR PEDIDOS (SOLICITACOES) AKA MENU SOLICITACOES
+                    break;
+                case 2:
+                    this.out.println("Users:\n");
+                    // listAllUsers();
+                    break;
+                case 3:
+                    this.out.println("JOIN_CHANNEL:" + NotifierThreads.SOLICITATIONS_MADE_CHANNELADDR);
 
                     // Listen for inputs from the user
                     listeningToUserInputWhileInChannel(listening);
-                }
+                    break;
+                case 4:
+                    this.out.println("JOIN_CHANNEL:" + NotifierThreads.APPROVALS_MADE_CHANNELADDR);
 
-                break;
-            default:
-                break;
-        }
-    }
+                    // Listen for inputs from the user
+                    listeningToUserInputWhileInChannel(listening);
+                    break;
+                case 5:
+                    if (loggedInUser.getRank().equals("General")) {
+                        this.out.println("JOIN_CHANNEL:" + NotifierThreads.CONNECTIONS_MADE_CHANNELADDR);
 
-    private void sendMessage(User loggedInUser) {
-        String recipientName = selectTarget(this.registeredUsers);
-        if (!recipientName.isEmpty()) {
-            this.out.println("\nMessage Content:");
-            String message = scanner.next();
-            User recipient = findUserByName(recipientName);
+                        // Listen for inputs from the user
+                        listeningToUserInputWhileInChannel(listening);
+                    }
 
-            if (recipient != null) {
-                recipient.registerMessage(message, loggedInUser.getName());
-            } else {
-                this.out.println("User not found.");
+                    break;
+                default:
+                    break;
             }
         }
-    }
-
-    private String selectTarget(List<? extends IGetName> targets) {
-        String recipientName = "";
-        do {
-            int listIndex = 0;
-            int selectedOption = -1;
-            List<Integer> options = List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-            List<String> messages = List.of("Back");
-
-            // Display list of registered users
-            displayUserList(listIndex, options, messages, targets);
-
-            // Get user input to select recipient
-            selectedOption = getMenuOption(options, messages);
-
-            if (selectedOption == 8 && listIndex > 0) {
-                listIndex--;
-            } else if (selectedOption == 9 && selectedOption - 2 < targets.size() - (listIndex * 7)) {
-                listIndex++;
-            } else if (selectedOption > 0 && selectedOption <= Math.min(targets.size() - (listIndex * 7), 7)) {
-                recipientName = targets.get((listIndex * 7) + (selectedOption - 1)).getName();
-            }
-        } while (recipientName.isEmpty());
-
-        return recipientName;
-    }
-
-    private void displayUserList(int listIndex, List<Integer> options, List<String> messages,
-            List<? extends IGetName> targets) {
-        this.out.println("[List of registered users to send a message to:]");
-        this.out.println("-----------------------");
-
-        int counter = 1;
-        for (int i = 0; i < Math.min(targets.size() - (listIndex * 7), 7); i++) {
-            messages.add(counter + " - " + targets.get((listIndex * 7) + i).getName());
-            counter++;
-        }
-
-        messages.add("Next Page");
-        messages.add("Previous Page");
     }
 
     /**

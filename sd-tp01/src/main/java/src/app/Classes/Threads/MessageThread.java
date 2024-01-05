@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -22,7 +21,7 @@ public class MessageThread extends Thread {
     private String content;
 
     // File path for storing messages
-    private static final String MESSAGE_FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
+    public static final String MESSAGE_FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
 
     public MessageThread(String sender, String recipient, String content) {
         this.sender = sender;
@@ -30,16 +29,17 @@ public class MessageThread extends Thread {
         this.content = content;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
         // Synchronize access to the file to ensure thread safety
         synchronized (MessageThread.class) {
             try {
-                // Create a new message
-                Message message = new Message(sender, recipient, content);
-
                 Path path = Path.of(MESSAGE_FILE_PATH);
                 File file = new File(path.toString());
+
+                // Create a new message
+                Message message = new Message(sender, recipient, content);
 
                 // Check if the file is empty
                 long fileSize = Files.size(path);
