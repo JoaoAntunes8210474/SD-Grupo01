@@ -14,8 +14,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import src.app.Classes.Threads.MessageThread;
+import src.app.Interfaces.IGetName;
 
-public class Message {
+public class Message implements IGetName {
     private String sender;
     private String recipient;
     private String title;
@@ -119,5 +120,10 @@ public class Message {
         }
 
         return null;
+    }
+
+    @Override
+    public String getName() {
+        return this.title;
     }
 }

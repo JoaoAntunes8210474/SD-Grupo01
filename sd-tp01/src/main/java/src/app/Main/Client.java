@@ -14,7 +14,7 @@ import java.util.Scanner;
 public class Client {
 
     // Name of the last channel the user joined
-    private static String joinedNotificationGroup;
+    private static String joinedNotificationGroup = "";
 
     // Boolean that indicates if the threads should keep running or not
     private static boolean keepRunning = true;
@@ -138,7 +138,7 @@ public class Client {
                                 leaveChannel(joinedNotificationGroup, multicastSocket);
 
                                 // Reset the joinedNotificationGroup variable
-                                joinedNotificationGroup = "";                            
+                                joinedNotificationGroup = "";
                             }
                         }
 
@@ -152,22 +152,23 @@ public class Client {
                     }
                 }
             });
-
-            // Create a thread to send heartbeats to the server
-            Thread heartbeatThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        while (keepRunning) {
-                            Thread.sleep(1000);
-                            out.println("heartbeat");
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
+            /**
+             * // Create a thread to send heartbeats to the server
+             * Thread heartbeatThread = new Thread(new Runnable() {
+             * 
+             * @Override
+             *           public void run() {
+             *           try {
+             *           while (keepRunning) {
+             *           Thread.sleep(1000);
+             *           out.println("heartbeat");
+             *           }
+             *           } catch (Exception e) {
+             *           e.printStackTrace();
+             *           }
+             *           }
+             *           });
+             */
             // Start the read thread
             readThread.start();
 
@@ -175,7 +176,7 @@ public class Client {
             writeThread.start();
 
             // Start the heartbeat thread
-            heartbeatThread.start();
+            // heartbeatThread.start();
         } catch (IOException e) {
             System.err.println("Couldn't get I/O for "
                     + "the connection to: localhost.");

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import src.app.Classes.AuthHandler;
+import src.app.Classes.Models.Message;
 import src.app.Classes.Models.ReplyObject;
 import src.app.Classes.Models.User;
 
@@ -245,7 +246,7 @@ public class ServerThreads extends Thread {
     private void userMenu(User loggedInUser) {
         if (!isHeartbeatBeingRead) {
             isHeartbeatBeingRead = true;
-            new HeartbeatReaderThread(loggedInUser, scanner, loggedInUsers).start();
+            // new HeartbeatReaderThread(loggedInUser, scanner, loggedInUsers).start();
         }
 
         boolean listening = true;
@@ -280,12 +281,24 @@ public class ServerThreads extends Thread {
                 sendMessage(loggedInUser);
                 break;
             case 2:
-                this.out.println("Users:\n");
-                // listAllUsers();
+                loggedInUser.receiveMessages();
+                // CARREGOU MESSAGES AGR FALTA LISTAR (selectTarget) PARA VER e depois mandar
                 break;
             case 3:
                 loggedInUser.receiveMessages();
-                // CARREGOU MESSAGES AGR FALTA LISTAR (selectTarget) PARA VER
+                // Listar mensagens recebidas
+
+                String messageTitle = selectTarget(loggedInUser.getMessages()); // vai listar titles das msg
+
+                if (!messageTitle.isEmpty()) {
+                    Message message = loggedInUser.findMessageByTitle(messageTitle);
+
+                    if (message != null) {
+                        this.out.println(message.getContent());
+                    } else {
+                        this.out.println("Message not found.");
+                    }
+                }
 
                 break;
             case 4:
@@ -332,7 +345,7 @@ public class ServerThreads extends Thread {
     }
 
     private String selectTarget(List<? extends IGetName> targets) {
-        String recipientName = "";
+        String target = "";
         do {
             int listIndex = 0;
             int selectedOption = -1;
@@ -350,11 +363,11 @@ public class ServerThreads extends Thread {
             } else if (selectedOption == 9 && selectedOption - 2 < targets.size() - (listIndex * 7)) {
                 listIndex++;
             } else if (selectedOption > 0 && selectedOption <= Math.min(targets.size() - (listIndex * 7), 7)) {
-                recipientName = targets.get((listIndex * 7) + (selectedOption - 1)).getName();
+                target = targets.get((listIndex * 7) + (selectedOption - 1)).getName();
             }
-        } while (recipientName.isEmpty());
+        } while (target.isEmpty());
 
-        return recipientName;
+        return target;
     }
 
     private void displayUserList(int listIndex, List<Integer> options, List<String> messages,

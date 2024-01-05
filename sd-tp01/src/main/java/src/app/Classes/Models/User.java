@@ -208,4 +208,14 @@ public abstract class User implements IUser {
         return loadedMessages;
     }
 
+    public Message findMessageByTitle(String title) {
+        for (Message message : this.messages) {
+            if (message.getTitle().equals(title)) {
+                return message;
+            }
+        }
+
+        return null;
+    }
+
 }
