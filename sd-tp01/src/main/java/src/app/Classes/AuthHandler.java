@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -23,6 +25,47 @@ import src.app.Classes.Models.Sergeant;
 import src.app.Classes.Models.User;
 
 public class AuthHandler {
+
+    /**
+     * Verify the credentials of a user.
+     * If a user with the given name exists, return true.
+     * Otherwise, return false.
+     * 
+     * @param name The name of the user.
+     * @return True if the user exists, false otherwise.
+     */
+    private static boolean verifyCredentials(String name) {
+        try {
+            FileReader fileReader = new FileReader("sd-tp01/src/main/java/src/app/Data/Users.json");
+
+            JSONParser jsonParser = new JSONParser();
+
+            JSONObject jsonObject = (JSONObject) jsonParser.parse(fileReader);
+
+            JSONArray jsonUsers = (JSONArray) jsonObject.get("users");
+
+            for (Object object : jsonUsers) {
+                JSONObject jsonUser = (JSONObject) object;
+
+                String jsonUsername = (String) jsonUser.get("name");
+
+                if (jsonUsername.equals(name)) {
+                    return true;
+                }
+            }
+
+            // Close the file reader
+            fileReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found - " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error reading file - " + e.getMessage());
+        } catch (ParseException e) {
+            System.out.println("Parse error - " + e.getMessage());
+        }
+
+        return false;
+    }
 
     /**
      * Verifies if the user is registered in the system.
@@ -54,13 +97,13 @@ public class AuthHandler {
                     User user = null;
 
                     switch (jsonRank) {
-                        case "Private":
+                        case "private":
                             user = new Private(jsonUsername, jsonPassword);
                             break;
-                        case "Sergeant":
+                        case "sergeant":
                             user = new Sergeant(jsonUsername, jsonPassword);
                             break;
-                        case "General":
+                        case "general":
                             user = new General(jsonUsername, jsonPassword);
                             break;
                     }
@@ -157,7 +200,12 @@ public class AuthHandler {
         }
     }
 
-    private static boolean verifyCredentials(String name) {
+    /**
+     * Get a list of all registered users.
+     * 
+     * @return a list of all registered users.
+     */
+    public static List<User> getAllRegisteredUsers() {
         try {
             FileReader fileReader = new FileReader("sd-tp01/src/main/java/src/app/Data/Users.json");
 
@@ -167,18 +215,32 @@ public class AuthHandler {
 
             JSONArray jsonUsers = (JSONArray) jsonObject.get("users");
 
+            List<User> allUsers = new ArrayList<>();
+
             for (Object object : jsonUsers) {
                 JSONObject jsonUser = (JSONObject) object;
 
                 String jsonUsername = (String) jsonUser.get("name");
+                String jsonPassword = (String) jsonUser.get("password");
+                String jsonRank = (String) jsonUser.get("rank");
 
-                if (jsonUsername.equals(name)) {
-                    return true;
+                switch (jsonRank) {
+                    case "private":
+                        allUsers.add(new Private(jsonUsername, jsonPassword));
+                        break;
+                    case "sergeant":
+                        allUsers.add(new Sergeant(jsonUsername, jsonPassword));
+                        break;
+                    case "general":
+                        allUsers.add(new General(jsonUsername, jsonPassword));
+                        break;
                 }
             }
 
             // Close the file reader
             fileReader.close();
+
+            return allUsers;
         } catch (FileNotFoundException e) {
             System.out.println("File not found - " + e.getMessage());
         } catch (IOException e) {
@@ -187,7 +249,6 @@ public class AuthHandler {
             System.out.println("Parse error - " + e.getMessage());
         }
 
-        return false;
+        return null;
     }
-
 }

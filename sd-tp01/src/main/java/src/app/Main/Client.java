@@ -9,6 +9,8 @@ import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client {
@@ -17,7 +19,7 @@ public class Client {
     private static String joinedNotificationGroup = "";
 
     // Boolean that indicates if the threads should keep running or not
-    private static boolean keepRunning = true;
+    private static volatile boolean keepRunning = true;
 
     /**
      * Function that joins a channel group for the given channel name
@@ -61,6 +63,8 @@ public class Client {
 
             final PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 
+            List<Thread> threads = new ArrayList<Thread>();
+
             // Create a thread to read from the multicast group
             Thread readThread = new Thread(new Runnable() {
                 @Override
@@ -84,6 +88,8 @@ public class Client {
 
                             serverMessage = in.readLine();
 
+                            System.out.println(serverMessage);
+
                             if (serverMessage.startsWith("JOIN_CHANNEL:")) {
                                 // Store what comes after the JOIN_CHANNEL: prefix in a variable
                                 String channelName = serverMessage.substring("JOIN_CHANNEL:".length());
@@ -98,20 +104,21 @@ public class Client {
                                 joinedNotificationGroup = channelName;
 
                                 return;
-                            } else if (serverMessage.equals("QUITTING")) {
+                            } else if (serverMessage.equals("[Quitting...]")) {
                                 // User selected option 0 in the first menu
                                 keepRunning = false;
-                                break;
+                                client.close();
+                                multicastSocket.close();
+                                in.close();
+                                System.exit(0);
                             }
-
-                            System.out.println(serverMessage);
                         }
-
-                        client.close();
-                        multicastSocket.close();
-                        in.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        if (!keepRunning) {
+                           
+                        } else {
+                            e.printStackTrace();
+                        }
                     }
                 }
             });
@@ -171,9 +178,11 @@ public class Client {
              */
             // Start the read thread
             readThread.start();
+            threads.add(readThread);
 
             // Start the write thread
             writeThread.start();
+            threads.add(writeThread);
 
             // Start the heartbeat thread
             // heartbeatThread.start();

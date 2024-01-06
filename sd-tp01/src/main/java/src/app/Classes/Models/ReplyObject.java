@@ -56,4 +56,8 @@ public class ReplyObject {
     public User getUser() {
         return this.user;
     }
+
+    public String toString() {
+        return "Success: " + this.wasOperationSuccessful + "\nMessage: " + this.message + "\nUser: " + this.user;
+    }
 }

@@ -10,10 +10,12 @@ import src.app.Classes.Models.User;
 import src.app.Classes.Threads.ServerThreads;
 
 public class Server {
-    private List<User> users; // List to store registered users
+    private List<User> users; // List to store logged in users
+    private List<User> allUsers; // List to store all registered users
 
     public Server() {
         this.users = new ArrayList<>();
+        this.allUsers = AuthHandler.getAllRegisteredUsers();
     }
 
     /**
@@ -22,6 +24,15 @@ public class Server {
      * @return a list of all registered users
      */
     public List<User> getAllUsers() {
+        return new ArrayList<>(this.users);
+    }
+
+    /**
+     * Get a list of all logged in users
+     * 
+     * @return a list of all logged in users
+     */
+    public List<User> getLoggedInUsers() {
         return new ArrayList<>(this.users);
     }
 
@@ -44,7 +55,7 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
 
                 // Handle each client connection in a separate thread
-                ServerThreads serverThreads = new ServerThreads(clientSocket, this.users);
+                ServerThreads serverThreads = new ServerThreads(clientSocket, this.users, this.allUsers);
                 serverThreads.start();
             }
         } catch (IOException e) {

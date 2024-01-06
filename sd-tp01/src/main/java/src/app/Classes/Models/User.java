@@ -32,9 +32,9 @@ public abstract class User implements IUser {
     // Constructor Method
     public User(String name, String password, String rank) {
         this.name = name;
-        setPassword(password); // Enforce password constraints in the constructor
+        this.password = password;
         this.rank = rank;
-        loadMessagesFromFile(); // Load messages from file
+        this.messages = new ArrayList<>();
     }
 
     // Getters and Setters Methods
@@ -148,11 +148,13 @@ public abstract class User implements IUser {
     // Messages.json file
     public void loadMessagesFromFile() {
         try {
-            Path filePath = Path.of(MESSAGES_FILE_PATH);
+            Path path = Path.of(MESSAGES_FILE_PATH);
 
-            if (Files.exists(filePath)) {
+            long fileSize = Files.size(path);
+
+            if (fileSize > 0) {
                 // Read all messages from the file
-                FileReader fileReader = new FileReader(filePath.toFile());
+                FileReader fileReader = new FileReader(path.toFile());
                 List<Message> allMessages = readMessagesFromJson(fileReader);
                 fileReader.close();
 
@@ -185,6 +187,10 @@ public abstract class User implements IUser {
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonObject = (JSONObject) jsonParser.parse(fileReader);
             JSONArray jsonMessages = (JSONArray) jsonObject.get("messages");
+
+            if (jsonMessages == null) {
+                return loadedMessages;
+            }
 
             for (Object obj : jsonMessages) {
                 JSONObject jsonMessage = (JSONObject) obj;

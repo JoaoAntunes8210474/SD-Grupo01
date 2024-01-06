@@ -56,6 +56,7 @@ public class MessageThread extends Thread {
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("sender", this.message.getSender());
                 jsonMessage.put("recipient", this.message.getRecipient());
+                jsonMessage.put("title", this.message.getTitle());
                 jsonMessage.put("content", this.message.getContent());
                 jsonMessage.put("timestamp", this.message.getTimestamp().toString());
 
@@ -72,7 +73,6 @@ public class MessageThread extends Thread {
                 // Append the JSON message to the file
                 FileWriter fileWriter = new FileWriter(file);
                 fileWriter.write(prettyJson);
-                System.out.println("Message sent:\n" + this.message);
 
                 fileReader.close();
                 fileWriter.close();
