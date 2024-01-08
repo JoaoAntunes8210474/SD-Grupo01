@@ -78,14 +78,18 @@ public class ServerThreads extends Thread {
      */
     private int getMenuOption(List<Integer> options, List<String> messages) {
         int option = -1;
+        boolean wasMenuAlreadyDisplayed = false;
         while (option < 0 || option > options.size()) {
-            this.out.println("[Choose an option:]");
-            this.out.println("-----------------------");
-            for (int i = 0; i < options.size(); i++) {
-                this.out.println(options.get(i) + " - " + messages.get(i));
-            }
+            if (!wasMenuAlreadyDisplayed) {
 
-            this.out.println("-----------------------");
+                this.out.println("[Choose an option:]");
+                this.out.println("-----------------------");
+                for (int i = 0; i < options.size(); i++) {
+                    this.out.println(options.get(i) + " - " + messages.get(i));
+                }
+
+                this.out.println("-----------------------");
+            }
 
             try {
                 String userInput = scanner.nextLine();
@@ -93,6 +97,8 @@ public class ServerThreads extends Thread {
                 if (userInput.contains("userInput:")) {
                     userInput = userInput.charAt("userInput:".length()) + "";
                     option = Integer.parseInt(userInput);
+                } else {
+                    wasMenuAlreadyDisplayed = true;
                 }
             } catch (NumberFormatException e) {
             }
@@ -272,51 +278,76 @@ public class ServerThreads extends Thread {
     private void registerForm() {
         this.clearTerminal();
 
-        this.out.println("[Enter your username:]");
-        String username = scanner.nextLine();
-
-        if (username.contains("userInput:")) {
-            username = this.removeUserInputPrefix(username);
-        }
-
-        this.out.println("[Enter your password:]");
-        String password = scanner.nextLine();
-
-        if (password.contains("userInput:")) {
-            password = this.removeUserInputPrefix(password);
-        }
-
+        String username;
+        String password;
         String rank;
-        boolean isValidRank = false;
+
+        boolean isUsernameInvalid = false;
+        boolean isPasswordInvalid = false;
+        boolean isRankInvalid = false;
+
+        boolean wasUsernameMessageDisplayed = false;
+        boolean wasPasswordMessageDisplayed = false;
+        boolean wasRankMessageDisplayed = false;
+
         do {
-            this.out.println("[Enter your rank:]");
+            if (!wasUsernameMessageDisplayed) {
+                this.out.println("[Enter your username:]");
+            }
+
+            username = scanner.nextLine();
+
+            if (username.contains("userInput:")) {
+                username = this.removeUserInputPrefix(username);
+
+                if (!AuthHandler.validateClientUsername(username)) {
+                    isUsernameInvalid = true;
+                    this.out.println("[Invalid username.]\n[Username must have between 3 to 20 characters.]");
+                }
+            } else {
+                wasUsernameMessageDisplayed = true;
+            }
+        } while (isUsernameInvalid);
+
+        do {
+            if (!wasPasswordMessageDisplayed) {
+                this.out.println("[Enter your password:]");
+            }
+
+            password = scanner.nextLine();
+
+            if (password.contains("userInput:")) {
+                password = this.removeUserInputPrefix(password);
+
+                if (!AuthHandler.validateClientPassword(password)) {
+                    isPasswordInvalid = true;
+                    this.out.println("[Invalid password.]\n[Password must have between 6 to 12 characters.]");
+                }
+            } else {
+                wasPasswordMessageDisplayed = true;
+            }
+
+        } while (isPasswordInvalid);
+
+        do {
+            if (!wasRankMessageDisplayed) {
+                this.out.println("[Enter your rank:]");
+            }
+
             rank = scanner.nextLine();
             rank = rank.toLowerCase();
 
             if (rank.contains("userInput:")) {
                 rank = this.removeUserInputPrefix(rank);
-            }
 
-            switch (rank) {
-                case "private":
-                    isValidRank = true;
-                    break;
-                case "sergeant":
-                    isValidRank = true;
-                    break;
-                case "general":
-                    isValidRank = true;
-                    break;
-                default:
-                    isValidRank = false;
-                    break;
+                if (!AuthHandler.validateClientRank(rank)) {
+                    isRankInvalid = true;
+                    this.out.println("[Invalid rank.]\n[Existing ranks: Private, Sergeant or General.]");
+                }
+            } else {
+                wasRankMessageDisplayed = true;
             }
-
-            if (!isValidRank) {
-                this.out.println("[Invalid rank.]\n[Existing ranks: Private, Sergeant or General.]");
-            }
-
-        } while (!isValidRank);
+        } while (isRankInvalid);
 
         this.clearTerminal();
 

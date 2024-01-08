@@ -115,7 +115,7 @@ public class Client {
                         }
                     } catch (IOException e) {
                         if (!keepRunning) {
-                           
+
                         } else {
                             e.printStackTrace();
                         }
@@ -159,33 +159,34 @@ public class Client {
                     }
                 }
             });
-            /**
-             * // Create a thread to send heartbeats to the server
-             * Thread heartbeatThread = new Thread(new Runnable() {
-             * 
-             * @Override
-             *           public void run() {
-             *           try {
-             *           while (keepRunning) {
-             *           Thread.sleep(1000);
-             *           out.println("heartbeat");
-             *           }
-             *           } catch (Exception e) {
-             *           e.printStackTrace();
-             *           }
-             *           }
-             *           });
-             */
+            // Create a thread to send heartbeats to the server
+            Thread heartbeatThread = new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        while (keepRunning) {
+                            Thread.sleep(1000);
+                            out.println("heartbeat");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            threads.add(readThread);
+            threads.add(writeThread);
+            threads.add(heartbeatThread);
+
             // Start the read thread
             readThread.start();
-            threads.add(readThread);
 
             // Start the write thread
             writeThread.start();
-            threads.add(writeThread);
 
             // Start the heartbeat thread
-            // heartbeatThread.start();
+            heartbeatThread.start();
         } catch (IOException e) {
             System.err.println("Couldn't get I/O for "
                     + "the connection to: localhost.");

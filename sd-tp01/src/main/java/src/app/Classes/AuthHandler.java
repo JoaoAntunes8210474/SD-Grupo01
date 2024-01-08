@@ -68,6 +68,66 @@ public class AuthHandler {
     }
 
     /**
+     * Validates the username of a client.
+     * 
+     * @param name The name of the client.
+     * @return True if the username is valid, false otherwise.
+     */
+    public static boolean validateClientUsername(String name) {
+        boolean isValidUsername = false;
+
+        if (name.length() >= 3 && name.length() <= 20) {
+            isValidUsername = true;
+        }
+
+        return isValidUsername;
+    }
+
+    /**
+     * Validates the password of a client.
+     * 
+     * @param password The password of the client.
+     * @return True if the password is valid, false otherwise.
+     */
+    public static boolean validateClientPassword(String password) {
+        boolean isValidPassword = false;
+
+        if (password.length() >= 6 && password.length() <= 12) {
+            isValidPassword = true;
+        }
+
+        return isValidPassword;
+    }
+
+    /**
+     * Validates the rank of a client.
+     * 
+     * @param rank The rank of the client.
+     * @return True if the rank is one of the allowed ranks, false otherwise.
+     */
+    public static boolean validateClientRank(String rank) {
+        boolean isValidRank = false;
+
+        switch (rank) {
+            case "private":
+                isValidRank = true;
+                break;
+            case "sergeant":
+                isValidRank = true;
+                break;
+            case "general":
+                isValidRank = true;
+                break;
+            default:
+                break;
+        }
+
+        return isValidRank;
+    }
+
+
+
+    /**
      * Verifies if the user is registered in the system.
      * 
      * @param user The user to be verified.
