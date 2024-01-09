@@ -41,9 +41,9 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             // "numberSolicitations": 0,
             // "numberApprovals": 0,
             // }
-            addChannel("SolicitationsMade", SOLICITATIONS_MADE_CHANNELADDR);
-            addChannel("ApprovalsMade", APPROVALS_MADE_CHANNELADDR);
-            addChannel("ConnectionsMade", CONNECTIONS_MADE_CHANNELADDR);
+            channelGroups.put("SolicitationsMade", InetAddress.getByName(SOLICITATIONS_MADE_CHANNELADDR));
+            channelGroups.put("ApprovalsMade", InetAddress.getByName(APPROVALS_MADE_CHANNELADDR));
+            channelGroups.put("ConnectionsMade", InetAddress.getByName(CONNECTIONS_MADE_CHANNELADDR));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -55,10 +55,11 @@ public class NotifierThreads extends Thread implements INotifierThreads {
      * @param channelName    Name of the channel
      * @param channelAddress Address of the channel
      */
-    private void addChannel(String channelName, String channelAddress) {
+    private void joinGroup(String channelName) {
         try {
-            InetAddress group = InetAddress.getByName(channelAddress);
-            channelGroups.put(channelName, group);
+            InetAddress group = channelGroups.get(channelName);
+            NetworkInterface networkInterface = NetworkInterface.getByInetAddress(group);
+            this.socket.joinGroup(new InetSocketAddress(group, 12321), networkInterface);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,7 +70,7 @@ public class NotifierThreads extends Thread implements INotifierThreads {
      * 
      * @param channelName Name of the channel
      */
-    private void leaveChannel(String channelName) {
+    private void leaveGroup(String channelName) {
         try {
             InetAddress group = channelGroups.get(channelName);
             NetworkInterface networkInterface = NetworkInterface.getByInetAddress(group);
@@ -97,6 +98,8 @@ public class NotifierThreads extends Thread implements INotifierThreads {
         // with the number of solicitations
         JSONParser jsonParser = new JSONParser();
         try {
+            joinGroup("SolicitationsMade");
+            
             JSONObject obj = (JSONObject) jsonParser.parse(this.in);
             int numberSolicitations = Integer.parseInt(obj.get("numberSolicitations").toString());
 
@@ -107,7 +110,7 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12321);
             socket.send(packet);
 
-            leaveChannel("SoliciationsMade");
+            leaveGroup("SoliciationsMade");
         } catch (Exception e) {
             System.out.println("Error notifying all solicitations made");
         }
@@ -123,6 +126,8 @@ public class NotifierThreads extends Thread implements INotifierThreads {
         // with the number of approvals
         JSONParser jsonParser = new JSONParser();
         try {
+            joinGroup("ApprovalsMade");
+
             JSONObject obj = (JSONObject) jsonParser.parse(this.in);
             int numberApprovals = Integer.parseInt(obj.get("numberApprovals").toString());
 
@@ -133,7 +138,7 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12321);
             socket.send(packet);
 
-            leaveChannel("ApprovalsMade");
+            leaveGroup("ApprovalsMade");
         } catch (Exception e) {
             System.out.println("Error notifying all approvals made");
         }
@@ -149,6 +154,8 @@ public class NotifierThreads extends Thread implements INotifierThreads {
         // with the number of connections
         JSONParser jsonParser = new JSONParser();
         try {
+            joinGroup("ConnectionsMade");
+
             JSONObject obj = (JSONObject) jsonParser.parse(this.in);
             int numberConnections = Integer.parseInt(obj.get("numberConnectedUsers").toString());
 
@@ -159,7 +166,7 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12321);
             socket.send(packet);
 
-            leaveChannel("ConnectionsMade");
+            leaveGroup("ConnectionsMade");
         } catch (Exception e) {
             System.out.println("Error notifying all connections made");
         }
