@@ -392,7 +392,7 @@ public class ServerThreads extends Thread {
             this.out.println("[User logged in successfully.]");
             // Create a thread to increment number of logged in users
             this.loggedInUsers.add(isLoggedIn.getUser());
-            // new IncrementLoggedInUsersThread(this.users).start();
+            new IncreaseNotificationParametersThread(isLoggedIn.getUser(), loggedInUsers).start();
             userMenu(isLoggedIn.getUser());
         }
     }
@@ -446,6 +446,11 @@ public class ServerThreads extends Thread {
 
         switch (optionSelected) {
             case 1:
+                // Protocolo
+
+                // Protocolo termina
+
+                // Começa a pedir o titulo e o conteudo da mensagem
                 result = sendMessage(loggedInUser);
 
                 this.clearTerminal();
