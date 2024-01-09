@@ -5,6 +5,8 @@ import java.io.FileReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,13 +51,29 @@ public class NotifierThreads extends Thread implements INotifierThreads {
 
     /**
      * Adds a channel to the channelGroups map
-     * @param channelName Name of the channel
+     * 
+     * @param channelName    Name of the channel
      * @param channelAddress Address of the channel
      */
     private void addChannel(String channelName, String channelAddress) {
         try {
             InetAddress group = InetAddress.getByName(channelAddress);
             channelGroups.put(channelName, group);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Leaves a channel
+     * 
+     * @param channelName Name of the channel
+     */
+    private void leaveChannel(String channelName) {
+        try {
+            InetAddress group = channelGroups.get(channelName);
+            NetworkInterface networkInterface = NetworkInterface.getByInetAddress(group);
+            this.socket.leaveGroup(new InetSocketAddress(group, 12321), networkInterface);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -88,6 +106,8 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             InetAddress group = channelGroups.get("SolicitationsMade");
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12321);
             socket.send(packet);
+
+            leaveChannel("SoliciationsMade");
         } catch (Exception e) {
             System.out.println("Error notifying all solicitations made");
         }
@@ -112,6 +132,8 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             InetAddress group = channelGroups.get("ApprovalsMade");
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12321);
             socket.send(packet);
+
+            leaveChannel("ApprovalsMade");
         } catch (Exception e) {
             System.out.println("Error notifying all approvals made");
         }
@@ -136,6 +158,8 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             InetAddress group = channelGroups.get("ConnectionsMade");
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12321);
             socket.send(packet);
+
+            leaveChannel("ConnectionsMade");
         } catch (Exception e) {
             System.out.println("Error notifying all connections made");
         }
