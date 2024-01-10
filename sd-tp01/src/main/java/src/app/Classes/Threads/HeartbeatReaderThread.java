@@ -11,7 +11,7 @@ public class HeartbeatReaderThread extends Thread {
     private User loggedInUser;
     private Scanner userInput;
     private List<User> listOfConnectedUsers;
-    
+
     // Constructor
     public HeartbeatReaderThread(User loggedInUser, Scanner userInput, List<User> listOfConnectedUsers) {
         super("[HeartbeatReaderThread]");
@@ -35,6 +35,8 @@ public class HeartbeatReaderThread extends Thread {
                 System.out.println(this.getName() + " - " + "User " + loggedInUser.getName() + " disconnected.");
             } finally {
                 listOfConnectedUsers.remove(loggedInUser);
+                new IncreaseNotificationParametersThread(loggedInUser, listOfConnectedUsers, "ConnectionsMade", false)
+                        .start();
                 userInput.close();
             }
         }

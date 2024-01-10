@@ -206,6 +206,10 @@ public class ServerThreads extends Thread {
 
             if (recipient != null) {
                 recipient.registerMessage(title, content, loggedInUser.getName());
+
+                new IncreaseNotificationParametersThread(loggedInUser, loggedInUsers, "SolicitationsMade", true)
+                        .start();
+
                 return new ReplyObject(true, "[Message sent successfully.]");
             } else {
                 this.out.println("[User not found.]");
@@ -392,7 +396,8 @@ public class ServerThreads extends Thread {
             this.out.println("[User logged in successfully.]");
             // Create a thread to increment number of logged in users
             this.loggedInUsers.add(isLoggedIn.getUser());
-            new IncreaseNotificationParametersThread(isLoggedIn.getUser(), loggedInUsers).start();
+            new IncreaseNotificationParametersThread(isLoggedIn.getUser(), loggedInUsers, "ConnectionsMade", true)
+                    .start();
             userMenu(isLoggedIn.getUser());
         }
     }
@@ -405,7 +410,7 @@ public class ServerThreads extends Thread {
     private void userMenu(User loggedInUser) {
         if (!isHeartbeatBeingRead) {
             isHeartbeatBeingRead = true;
-            // new HeartbeatReaderThread(loggedInUser, scanner, loggedInUsers).start();
+            new HeartbeatReaderThread(loggedInUser, scanner, loggedInUsers).start();
         }
 
         boolean listening = true;
@@ -487,6 +492,8 @@ public class ServerThreads extends Thread {
                             message.setApproved("Approved by " + loggedInUser.getName());
                             message.UpdateEntryInFile();
                             this.out.println("[Message approved successfully.]");
+                            new IncreaseNotificationParametersThread(loggedInUser, loggedInUsers, "ApprovalsMade", true)
+                                    .start();
                         } else if (selectedOption == 2) {
                             this.out.println("[Message not approved.]");
                         }
