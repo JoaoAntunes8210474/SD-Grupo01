@@ -132,15 +132,23 @@ public abstract class User implements IUser {
      * @throws Exception if the recipient is not a valid user
      * @throws Exception if the message is empty or too long
      */
-    public void registerMessage(String title, String content, String senderOfTheMessage) {
+    public void registerPersonalMessage(String title, String content, String senderOfTheMessage) {
         // Write to json file the message, the sender and the recipient
         MessageThread messageThread = new MessageThread(
                 new Message(senderOfTheMessage, this.username, "", title, content));
         messageThread.start();
     }
 
+    public void registerChannelMessage(String title, String content, String channel) {
+        // Write to json file the message, the sender and the recipient
+        MessageThread messageThread = new MessageThread(
+                new Message(this.username, channel, title, content));
+        messageThread.start();
+    }
+
     /**
      * Send a reply to a message
+     * 
      * @return ReplyObject
      */
     public void sendReply(String content, String originalMessageTitle, String recipient,
@@ -161,6 +169,7 @@ public abstract class User implements IUser {
 
     /**
      * Method to find a message by its title
+     * 
      * @param title the title of the message to be found
      * @return the message with the given title
      */

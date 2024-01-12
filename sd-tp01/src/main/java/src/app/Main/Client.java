@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -28,8 +28,8 @@ public class Client {
      */
     private static void joinChannel(String channelName, MulticastSocket multicastSocket) {
         try {
-            InetSocketAddress groupAddress = new InetSocketAddress(channelName, 12322);
-            multicastSocket.joinGroup(groupAddress, null);
+            InetAddress groupAddress = InetAddress.getByName(channelName);
+            multicastSocket.joinGroup(groupAddress);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -44,8 +44,10 @@ public class Client {
      */
     private static void leaveChannel(String channelName, MulticastSocket multicastSocket) {
         try {
-            InetSocketAddress groupAddress = new InetSocketAddress(channelName, 12322);
-            multicastSocket.leaveGroup(groupAddress, null);
+            InetAddress groupAddress = InetAddress.getByName(channelName);
+            multicastSocket.leaveGroup(groupAddress);
+
+            System.out.println("You left channel " + channelName);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -57,9 +59,9 @@ public class Client {
         try {
             final Socket client = new Socket("localhost", 3000);
 
-            final MulticastSocket multicastSocket = new MulticastSocket(12322);
-
             final BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+
+            final MulticastSocket multicastSocket = new MulticastSocket(12323);
 
             final PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 
@@ -70,11 +72,13 @@ public class Client {
                 @Override
                 public void run() {
                     try {
-                        String serverMessage;
+                        String serverMessage = "";
                         while (keepRunning) {
+                            if (joinedNotificationGroup.isEmpty()) {
+                                serverMessage = in.readLine();
+                            }
+
                             if (!joinedNotificationGroup.isEmpty()) {
-                                // Read from the multicast group
-                                // and print the message to the terminal
                                 byte[] buffer = new byte[1024];
                                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                                 multicastSocket.receive(packet);
@@ -86,25 +90,19 @@ public class Client {
                                 serverMessage = message;
                             }
 
-                            serverMessage = in.readLine();
-
-                            System.out.println(serverMessage);
-
                             if (serverMessage.startsWith("JOIN_CHANNEL:")) {
                                 // Store what comes after the JOIN_CHANNEL: prefix in a variable
                                 String channelName = serverMessage.substring("JOIN_CHANNEL:".length());
 
-                                // Inform the user that he is joining the channel
-                                System.out.println("You are now joining channel " + channelName);
-
                                 // Join a channel group for the given channel name
                                 joinChannel(channelName, multicastSocket);
 
+                                System.out.println("You joined channel " + channelName);
+
                                 // Store the channel name in a variable
                                 joinedNotificationGroup = channelName;
-
-                                return;
                             } else if (serverMessage.equals("[Quitting...]")) {
+                                System.out.println("Quitting...");
                                 // User selected option 0 in the first menu
                                 keepRunning = false;
                                 client.close();
@@ -112,6 +110,8 @@ public class Client {
                                 in.close();
                                 System.exit(0);
                             }
+
+                            System.out.println(serverMessage);
                         }
                     } catch (IOException e) {
                         if (!keepRunning) {
@@ -144,6 +144,8 @@ public class Client {
                                 // Leave the channel group
                                 leaveChannel(joinedNotificationGroup, multicastSocket);
 
+                                System.out.println("You left channel " + joinedNotificationGroup);
+
                                 // Reset the joinedNotificationGroup variable
                                 joinedNotificationGroup = "";
                             }
@@ -159,35 +161,17 @@ public class Client {
                     }
                 }
             });
-            // Create a thread to send heartbeats to the server
-            Thread heartbeatThread = new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        while (keepRunning) {
-                            Thread.sleep(1000);
-                            out.println("heartbeat");
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
 
             threads.add(readThread);
             threads.add(writeThread);
-            threads.add(heartbeatThread);
 
             // Start the read thread
             readThread.start();
 
             // Start the write thread
             writeThread.start();
-
-            // Start the heartbeat thread
-            heartbeatThread.start();
         } catch (IOException e) {
+            e.printStackTrace();
             System.err.println("Couldn't get I/O for "
                     + "the connection to: localhost.");
             System.exit(1);

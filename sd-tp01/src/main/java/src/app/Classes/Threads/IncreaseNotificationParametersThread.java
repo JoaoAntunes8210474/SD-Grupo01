@@ -1,15 +1,11 @@
 package src.app.Classes.Threads;
 
-import src.app.Classes.Models.User;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -19,20 +15,16 @@ import com.google.gson.GsonBuilder;
 public class IncreaseNotificationParametersThread extends Thread {
     private static final String FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Stats.json";
 
-    // List of all logged in users
-    private List<User> loggedInUsers;
-
     // Variable to check which item to increment
     private String itemToIncrement;
 
     // Variable to check if it is an increment or a decrement
     private boolean isItAnIncrement;
 
-    public IncreaseNotificationParametersThread(List<User> loggedInUsers, String itemToIncrement,
+    public IncreaseNotificationParametersThread(String itemToIncrement,
             boolean isItAnIncrement) {
         super("[IncreaseNotificationParametersThread]");
 
-        this.loggedInUsers = loggedInUsers;
         this.itemToIncrement = itemToIncrement;
         this.isItAnIncrement = isItAnIncrement;
     }
@@ -50,7 +42,6 @@ public class IncreaseNotificationParametersThread extends Thread {
             long fileSize = Files.size(path);
 
             JSONObject jsonObject;
-            JSONArray jsonStats;
 
             FileReader fileReader = new FileReader(file);
             JSONParser jsonParser = new JSONParser();
@@ -59,22 +50,33 @@ public class IncreaseNotificationParametersThread extends Thread {
             // Convert the message to JSON
             if (fileSize == 0) {
                 jsonObject = new JSONObject();
-                jsonStats = new JSONArray();
 
-                jsonStat.put("SolicitationsMade", 1);
-                jsonStat.put("ApprovalsMade", 0);
-                jsonStat.put("ConnectionsMade", 0);
+                jsonStat.put("numberSolicitations", 1);
+                jsonStat.put("numberApprovals", 0);
+                jsonStat.put("numberConnections", 0);
             } else {
                 jsonObject = (JSONObject) jsonParser.parse(fileReader);
-                jsonStats = (JSONArray) jsonObject.get("stats");
+                JSONObject fileStats = (JSONObject) jsonObject.get("stats");
 
-                String numberOfSolicitationsMadeString = jsonStat.get(this.itemToIncrement).toString();
+                String numberOfSolicitationsMadeString = fileStats.get(this.itemToIncrement).toString();
+                String numberOfApprovalsMadeString = fileStats.get("numberApprovals").toString();
+                String numberOfConnectedUsersString = fileStats.get("numberConnections").toString();
 
                 if (numberOfSolicitationsMadeString == null) {
                     numberOfSolicitationsMadeString = "0";
                 }
 
+                if (numberOfApprovalsMadeString == null) {
+                    numberOfApprovalsMadeString = "0";
+                }
+
+                if (numberOfConnectedUsersString == null) {
+                    numberOfConnectedUsersString = "0";
+                }
+
                 int numberOfSolicitationsMade = Integer.parseInt(numberOfSolicitationsMadeString);
+                int numberOfApprovalsMade = Integer.parseInt(numberOfApprovalsMadeString);
+                int numberOfConnectedUsers = Integer.parseInt(numberOfConnectedUsersString);
 
                 if (this.isItAnIncrement) {
                     jsonStat.put(this.itemToIncrement, (numberOfSolicitationsMade + 1));
@@ -82,13 +84,11 @@ public class IncreaseNotificationParametersThread extends Thread {
                     jsonStat.put(this.itemToIncrement, (numberOfSolicitationsMade - 1));
                 }
 
-                jsonStat.put("ApprovalsMade", jsonStat.get("ApprovalsMade"));
-                jsonStat.put("ConnectionsMade", jsonStat.get("ConnectionsMade"));
+                jsonStat.put("numberApprovals", numberOfApprovalsMade);
+                jsonStat.put("numberConnections", numberOfConnectedUsers);
             }
 
-            jsonStats.add(jsonStat);
-
-            jsonObject.put("stats", jsonStats);
+            jsonObject.put("stats", jsonStat);
 
             // Beautify the JSON before writing it to the file
             // by adding newlines and indentation
@@ -120,7 +120,6 @@ public class IncreaseNotificationParametersThread extends Thread {
             long fileSize = Files.size(path);
 
             JSONObject jsonObject;
-            JSONArray jsonStats;
 
             FileReader fileReader = new FileReader(file);
             JSONParser jsonParser = new JSONParser();
@@ -129,24 +128,33 @@ public class IncreaseNotificationParametersThread extends Thread {
             // Convert the message to JSON
             if (fileSize == 0) {
                 jsonObject = new JSONObject();
-                jsonStats = new JSONArray();
 
-                jsonStat.put("SolicitationsMade", 0);
-                jsonStat.put("ApprovalsMade", 1);
-                jsonStat.put("ConnectionsMade", 0);
+                jsonStat.put("numberSolicitations", 0);
+                jsonStat.put("numberApprovals", 1);
+                jsonStat.put("numberConnections", 0);
             } else {
                 jsonObject = (JSONObject) jsonParser.parse(fileReader);
-                jsonStats = (JSONArray) jsonObject.get("stats");
+                JSONObject fileStats = (JSONObject) jsonObject.get("stats");
 
-                jsonStat.put("SolicitationsMade", jsonStat.get("SolicitationsMade"));
+                String numberOfSolicitationsMadeString = fileStats.get("numberSolicitations").toString();
+                String numberOfApprovalsMadeString = fileStats.get(this.itemToIncrement).toString();
+                String numberOfConnectedUsersString = fileStats.get("numberConnections").toString();
 
-                String numberOfApprovalsMadeString = jsonStat.get(this.itemToIncrement).toString();
+                if (numberOfSolicitationsMadeString == null) {
+                    numberOfSolicitationsMadeString = "0";
+                }
 
                 if (numberOfApprovalsMadeString == null) {
                     numberOfApprovalsMadeString = "0";
                 }
 
+                if (numberOfConnectedUsersString == null) {
+                    numberOfConnectedUsersString = "0";
+                }
+
+                int numberOfSolicitationsMade = Integer.parseInt(numberOfSolicitationsMadeString);
                 int numberOfApprovalsMade = Integer.parseInt(numberOfApprovalsMadeString);
+                int numberOfConnectedUsers = Integer.parseInt(numberOfConnectedUsersString);
 
                 if (this.isItAnIncrement) {
                     jsonStat.put(this.itemToIncrement, (numberOfApprovalsMade + 1));
@@ -154,12 +162,11 @@ public class IncreaseNotificationParametersThread extends Thread {
                     jsonStat.put(this.itemToIncrement, (numberOfApprovalsMade - 1));
                 }
 
-                jsonStat.put("ConnectionsMade", jsonStat.get("ConnectionsMade"));
+                jsonStat.put("numberSolicitations", numberOfSolicitationsMade);
+                jsonStat.put("numberConnections", numberOfConnectedUsers);
             }
 
-            jsonStats.add(jsonStat);
-
-            jsonObject.put("stats", jsonStats);
+            jsonObject.put("stats", jsonStat);
 
             // Beautify the JSON before writing it to the file
             // by adding newlines and indentation
@@ -191,7 +198,6 @@ public class IncreaseNotificationParametersThread extends Thread {
             long fileSize = Files.size(path);
 
             JSONObject jsonObject;
-            JSONArray jsonStats;
 
             FileReader fileReader = new FileReader(file);
             JSONParser jsonParser = new JSONParser();
@@ -200,30 +206,56 @@ public class IncreaseNotificationParametersThread extends Thread {
             // Convert the message to JSON
             if (fileSize == 0) {
                 jsonObject = new JSONObject();
-                jsonStats = new JSONArray();
 
-                jsonStat.put("SolicitationsMade", 0);
-                jsonStat.put("ApprovalsMade", 0);
-                jsonStat.put("ConnectionsMade", 1);
+                jsonStat.put("numberSolicitations", 0);
+                jsonStat.put("numberApprovals", 0);
+                jsonStat.put("numberConnections", 1);
             } else {
                 jsonObject = (JSONObject) jsonParser.parse(fileReader);
-                jsonStats = (JSONArray) jsonObject.get("stats");
+                JSONObject fileStats = (JSONObject) jsonObject.get("stats");
 
-                jsonStat.put("ApprovalsMade", jsonStat.get("ApprovalsMade"));
-                jsonStat.put("SolicitationsMade", jsonStat.get("SolicitationsMade"));
+                Object numberOfSolicitationsMadeObj = fileStats.get("numberSolicitations");
+                String numberOfSolicitationsMadeString = numberOfSolicitationsMadeObj != null
+                        ? numberOfSolicitationsMadeObj.toString()
+                        : null;
 
-                int numberOfConnectionsMade = this.loggedInUsers.size();
+                Object numberOfApprovalsMadeObj = fileStats.get("numberApprovals");
+                String numberOfApprovalsMadeString = numberOfApprovalsMadeObj != null
+                        ? numberOfApprovalsMadeObj.toString()
+                        : null;
+
+                Object numberOfConnectedUsersObj = fileStats.get(this.itemToIncrement);
+                String numberOfConnectedUsersString = numberOfConnectedUsersObj != null
+                        ? numberOfConnectedUsersObj.toString()
+                        : null;
+
+                if (numberOfSolicitationsMadeString == null) {
+                    numberOfSolicitationsMadeString = "0";
+                }
+
+                if (numberOfApprovalsMadeString == null) {
+                    numberOfApprovalsMadeString = "0";
+                }
+
+                if (numberOfConnectedUsersString == null) {
+                    numberOfConnectedUsersString = "0";
+                }
+
+                int numberOfSolicitationsMade = Integer.parseInt(numberOfSolicitationsMadeString);
+                int numberOfApprovalsMade = Integer.parseInt(numberOfApprovalsMadeString);
+                int numberOfConnectedUsers = Integer.parseInt(numberOfConnectedUsersString);
 
                 if (this.isItAnIncrement) {
-                    jsonStat.put(this.itemToIncrement, (numberOfConnectionsMade + 1));
+                    jsonStat.put(this.itemToIncrement, (numberOfConnectedUsers + 1));
                 } else {
-                    jsonStat.put(this.itemToIncrement, (numberOfConnectionsMade - 1));
+                    jsonStat.put(this.itemToIncrement, (numberOfConnectedUsers - 1));
                 }
+
+                jsonStat.put("numberSolicitations", numberOfSolicitationsMade);
+                jsonStat.put("numberApprovals", numberOfApprovalsMade);
             }
 
-            jsonStats.add(jsonStat);
-
-            jsonObject.put("stats", jsonStats);
+            jsonObject.put("stats", jsonStat);
 
             // Beautify the JSON before writing it to the file
             // by adding newlines and indentation
@@ -244,11 +276,11 @@ public class IncreaseNotificationParametersThread extends Thread {
 
     @Override
     public void run() {
-        if (itemToIncrement.equals("SolicitationsMade")) {
+        if (itemToIncrement.equals("numberSolicitations")) {
             changeSolicitationsMade();
-        } else if (itemToIncrement.equals("ApprovalsMade")) {
+        } else if (itemToIncrement.equals("numberApprovals")) {
             changeApprovalsMade();
-        } else if (itemToIncrement.equals("ConnectionsMade")) {
+        } else if (itemToIncrement.equals("numberConnections")) {
             changeConnectionsMade();
         } else {
             System.out.println("[Invalid item to increment]");

@@ -12,7 +12,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import src.app.Classes.Threads.MessageThread;
 import src.app.Classes.Threads.ReplyThread;
 
 public class Reply {
@@ -20,9 +19,10 @@ public class Reply {
     private String content;
     private String sender;
     private String originalMessageTitle;
-    private String recipient;
+    private String originalMessageSender;
     private String nameOfTheChannel;
-    private boolean pingRecipient;
+    private boolean pingOriginalMessageSender;
+    private LocalDateTime date;
 
     // Constructor
     public Reply(String content, String sender, String originalMessageTitle, String recipient,
@@ -30,9 +30,21 @@ public class Reply {
         this.content = content;
         this.sender = sender;
         this.originalMessageTitle = originalMessageTitle;
-        this.recipient = recipient;
+        this.originalMessageSender = recipient;
         this.nameOfTheChannel = nameOfTheChannel;
-        this.pingRecipient = pingRecipient;
+        this.pingOriginalMessageSender = pingRecipient;
+        this.date = LocalDateTime.now();
+    }
+
+    public Reply(String content, String sender, String originalMessageTitle, String recipient,
+            String nameOfTheChannel, boolean pingRecipient, LocalDateTime date) {
+        this.content = content;
+        this.sender = sender;
+        this.originalMessageTitle = originalMessageTitle;
+        this.originalMessageSender = recipient;
+        this.nameOfTheChannel = nameOfTheChannel;
+        this.pingOriginalMessageSender = pingRecipient;
+        this.date = date;
     }
 
     // Getters and Setters Methods
@@ -69,8 +81,8 @@ public class Reply {
      * 
      * @return the recipient of the reply
      */
-    public String getRecipient() {
-        return this.recipient;
+    public String getOriginalMessageSender() {
+        return this.originalMessageSender;
     }
 
     /**
@@ -87,8 +99,17 @@ public class Reply {
      * 
      * @return the ping recipient of the reply
      */
-    public boolean getPingRecipient() {
-        return this.pingRecipient;
+    public boolean getPingOriginalMessageSender() {
+        return this.pingOriginalMessageSender;
+    }
+
+    /**
+     * Get the date of the reply
+     * 
+     * @return the date of the reply
+     */
+    public LocalDateTime getDate() {
+        return this.date;
     }
 
     /**
@@ -123,8 +144,8 @@ public class Reply {
      * 
      * @param recipient the recipient of the reply
      */
-    public void setRecipient(String recipient) {
-        this.recipient = recipient;
+    public void setOriginalMessageSender(String recipient) {
+        this.originalMessageSender = recipient;
     }
 
     /**
@@ -141,8 +162,8 @@ public class Reply {
      * 
      * @param pingRecipient the ping recipient of the reply
      */
-    public void setPingRecipient(boolean pingRecipient) {
-        this.pingRecipient = pingRecipient;
+    public void setPingOriginalMessageSender(boolean pingRecipient) {
+        this.pingOriginalMessageSender = pingRecipient;
     }
 
     // Methods
@@ -161,7 +182,7 @@ public class Reply {
                 JSONParser jsonParser = new JSONParser();
 
                 JSONObject jsonObject = (JSONObject) jsonParser.parse(fileReader);
-                JSONArray jsonReplies = (JSONArray) jsonObject.get("messages");
+                JSONArray jsonReplies = (JSONArray) jsonObject.get("replies");
 
                 List<Reply> userReplies = new ArrayList<>();
 
@@ -174,12 +195,12 @@ public class Reply {
                     String recipient = jsonReply.get("recipient").toString();
                     String nameOfTheChannel = jsonReply.get("nameOfTheChannel").toString();
                     boolean pingRecipient = Boolean.parseBoolean(jsonReply.get("pingRecipient").toString());
+                    LocalDateTime date = LocalDateTime.parse(jsonReply.get("date").toString());
 
                     Reply newReply = new Reply(content, sender, originalMessageTitle, recipient, nameOfTheChannel,
-                            pingRecipient);
-                    
+                            pingRecipient, date);
 
-                    if (newReply.getNameOfTheChannel().equals(nameOfTheChannel)) {
+                    if (newReply.getOriginalMessageTitle().equals(title)) {
                         userReplies.add(newReply);
                     }
                 }

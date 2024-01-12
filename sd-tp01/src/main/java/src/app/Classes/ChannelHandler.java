@@ -17,9 +17,133 @@ import com.google.gson.GsonBuilder;
 
 import src.app.Classes.Models.Channel;
 import src.app.Classes.Models.ReplyObject;
+import src.app.Classes.Threads.MessageThread;
+import src.app.Classes.Threads.ReplyThread;
 
 public class ChannelHandler {
     private static final String FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Channels.json";
+
+    /**
+     * Function that gets all messages from a channel from the messages file and
+     * removes the messages from the channel to be deleted
+     * 
+     * @param channelName Name of the channel
+     * @return A reply telling if the operation was successful or not
+     */
+    @SuppressWarnings("unchecked")
+    private static synchronized ReplyObject removeMessagesFromChannel(String channelName) {
+        try {
+            // Read the file
+            Path path = Path.of(MessageThread.FILE_PATH);
+            File file = new File(path.toString());
+
+            long fileSize = Files.size(path);
+
+            JSONObject jsonObject;
+            JSONArray jsonMessages;
+
+            FileReader fileReader = new FileReader(file);
+            JSONParser jsonParser = new JSONParser();
+            JSONObject jsonMessage = new JSONObject();
+
+            // Convert the message to JSON
+            if (fileSize != 0) {
+                jsonObject = (JSONObject) jsonParser.parse(fileReader);
+                jsonMessages = (JSONArray) jsonObject.get("messages");
+
+                for (int i = 0; i < jsonMessages.size(); i++) {
+                    jsonMessage = (JSONObject) jsonMessages.get(i);
+
+                    if (jsonMessage.get("channel").equals(channelName)) {
+                        jsonMessages.remove(i);
+                        i--;
+                    }
+                }
+
+                jsonObject.put("messages", jsonMessages);
+
+                // Beautify the JSON
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+                String prettyJson = gson.toJson(jsonObject);
+
+                // Write the new JSON to the file
+                FileWriter fileWriter = new FileWriter(file);
+                fileWriter.write(prettyJson);
+
+                fileWriter.close();
+            }
+
+            fileReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return new ReplyObject(false, "[Error removing messages]");
+        }
+
+        return new ReplyObject(true, "[Messages removed]");
+    }
+
+    /**
+     * Function that gets all replies from a channel from the replies file and
+     * removes the replies from the channel to be deleted
+     * 
+     * @param channelName Name of the channel
+     * @return A reply telling if the operation was successful or not
+     */
+    @SuppressWarnings("unchecked")
+    private static synchronized ReplyObject removeRepliesFromChannel(String channelName) {
+        try {
+            // Read the file
+            Path path = Path.of(ReplyThread.FILE_PATH);
+            File file = new File(path.toString());
+
+            long fileSize = Files.size(path);
+
+            JSONObject jsonObject;
+            JSONArray jsonReplies;
+
+            FileReader fileReader = new FileReader(file);
+            JSONParser jsonParser = new JSONParser();
+            JSONObject jsonReply = new JSONObject();
+
+            // Convert the message to JSON
+            if (fileSize != 0) {
+                jsonObject = (JSONObject) jsonParser.parse(fileReader);
+                jsonReplies = (JSONArray) jsonObject.get("replies");
+
+                for (int i = 0; i < jsonReplies.size(); i++) {
+                    jsonReply = (JSONObject) jsonReplies.get(i);
+
+                    if (jsonReply.get("nameOfTheChannel").equals(channelName)) {
+                        jsonReplies.remove(i);
+                        i--;
+                    }
+                }
+
+                jsonObject.put("replies", jsonReplies);
+
+                // Beautify the JSON
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+                String prettyJson = gson.toJson(jsonObject);
+
+                // Write the new JSON to the file
+                FileWriter fileWriter = new FileWriter(file);
+                fileWriter.write(prettyJson);
+
+                fileWriter.close();
+            }
+
+            fileReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return new ReplyObject(false, "Error removing replies");
+        }
+
+        return new ReplyObject(true, "Replies removed");
+    }
 
     /**
      * Function that checks if a channel exists in the channels file
@@ -96,7 +220,7 @@ public class ChannelHandler {
                 jsonObject = (JSONObject) jsonParser.parse(fileReader);
                 jsonChannels = (JSONArray) jsonObject.get("channels");
             }
-            
+
             JSONObject jsonChannel = new JSONObject();
             jsonChannel.put("name", channelName);
             jsonChannel.put("creator", channelCreator);
@@ -166,12 +290,16 @@ public class ChannelHandler {
 
                 jsonObject.put("channels", jsonChannels);
 
+                // Beautify the JSON
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+                String prettyJson = gson.toJson(jsonObject);
+
                 // Write the new JSON to the file
                 FileWriter fileWriter = new FileWriter(file);
-                fileWriter.write(jsonObject.toJSONString());
-                fileWriter.flush();
-                fileWriter.close();
+                fileWriter.write(prettyJson);
 
+                fileWriter.close();
             }
 
             fileReader.close();
@@ -179,6 +307,18 @@ public class ChannelHandler {
             e.printStackTrace();
 
             return new ReplyObject(false, "Error removing channel");
+        }
+
+        ReplyObject reply = removeMessagesFromChannel(channelName);
+
+        if (!reply.getWasOperationSuccessful()) {
+            return reply;
+        }
+
+        reply = removeRepliesFromChannel(channelName);
+
+        if (!reply.getWasOperationSuccessful()) {
+            return reply;
         }
 
         return new ReplyObject(true, "Channel removed");

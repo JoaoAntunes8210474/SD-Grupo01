@@ -1,9 +1,7 @@
 {
-  "stats": [
-    {
-      "ApprovalsMade": 0,
-      "ConnectionsMade": 0,
-      "SolicitationsMade": 1
-    }
-  ]
+  "stats": {
+    "numberConnections": 4,
+    "numberSolicitations": 12,
+    "numberApprovals": 4
+  }
 }

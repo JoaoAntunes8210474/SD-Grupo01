@@ -3,6 +3,7 @@ package src.app.Classes.Threads;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -39,11 +40,17 @@ public class ServerThreads extends Thread {
     // List to store all channels
     private List<Channel> createdChannels;
 
+    // List to store all heartbeat threads
+    private List<HeartbeatReaderThread> heartbeatThreads;
+
     // Scanner to read user input
     private Scanner scanner;
 
     // Variable to control the heartbeat
     private boolean isHeartbeatBeingRead;
+
+    // Variable to store the user input
+    private String userInput;
 
     //// Constructor
     /**
@@ -53,11 +60,12 @@ public class ServerThreads extends Thread {
      * @param users        the list of logged in users
      */
     public ServerThreads(Socket clientSocket, List<User> LoggedInUsers, List<User> registeredUsers,
-            List<Channel> listOfCreatedChannels) {
+            List<Channel> createdChannels, List<HeartbeatReaderThread> heartbeatThreads) {
         this.clientSocket = clientSocket;
         this.loggedInUsers = LoggedInUsers;
         this.registeredUsers = registeredUsers;
-        this.createdChannels = listOfCreatedChannels;
+        this.createdChannels = createdChannels;
+        this.heartbeatThreads = heartbeatThreads;
 
         this.isHeartbeatBeingRead = false;
 
@@ -69,7 +77,6 @@ public class ServerThreads extends Thread {
         }
     }
 
-    //// Methods
     /**
      * Clear the terminal
      */
@@ -102,7 +109,7 @@ public class ServerThreads extends Thread {
             }
 
             try {
-                String userInput = scanner.nextLine();
+                this.userInput = scanner.nextLine();
 
                 if (userInput.contains("userInput:")) {
                     userInput = userInput.charAt("userInput:".length()) + "";
@@ -113,6 +120,7 @@ public class ServerThreads extends Thread {
             } catch (NumberFormatException e) {
             }
         }
+
         return option;
     }
 
@@ -126,8 +134,13 @@ public class ServerThreads extends Thread {
         return userInput.substring("userInput:".length());
     }
 
+    /**
+     * Method to get the user input
+     * 
+     * @param label the label to display to the user
+     * @return the user input
+     */
     private String getUserInput(String label) {
-        String userInput = "";
         boolean wasLabelDisplayed = false;
 
         do {
@@ -165,6 +178,22 @@ public class ServerThreads extends Thread {
     }
 
     /**
+     * Find a channel by name in the list of created channels
+     * 
+     * @param channelName the name of the channel to find
+     * @return the Channel object if found, null otherwise
+     */
+    private Channel findChannelByName(String channelName) {
+        for (Channel channel : this.createdChannels) {
+            if (channel.getName().equals(channelName)) {
+                return channel;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Method to listen to user input while in a channel
      * If the user sends the message "userInput:0", stop listening and display the
      * previous menu
@@ -172,11 +201,9 @@ public class ServerThreads extends Thread {
      * @param listening boolean to control the loop
      */
     private void listeningToUserInputWhileInChannel(boolean listening) {
-        String userInput;
-
         try {
             while (listening) {
-                userInput = scanner.nextLine();
+                this.userInput = scanner.nextLine();
 
                 if (userInput.equals("userInput:0")) {
                     listening = false;
@@ -216,13 +243,22 @@ public class ServerThreads extends Thread {
     /**
      * Method to send a message to a user or a channel
      */
-    private ReplyObject sendMessage(User loggedInUser, boolean isItPersonalMessage) {
+    private ReplyObject sendMessage(User loggedInUser, boolean isItPersonalMessage, String channelName) {
         ReplyObject result;
 
         if (isItPersonalMessage) {
-            result = selectTarget(this.registeredUsers);
+            // List of registered users minus the logged in user
+            List<User> registeredUsersMinusLoggedInUser = new ArrayList<User>(this.registeredUsers);
+            for (User user : registeredUsersMinusLoggedInUser) {
+                if (user.getUsername().equals(loggedInUser.getUsername())) {
+                    registeredUsersMinusLoggedInUser.remove(user);
+                    break;
+                }
+            }
+
+            result = selectTarget(registeredUsersMinusLoggedInUser);
         } else {
-            result = selectTarget(this.createdChannels);
+            result = new ReplyObject(true, channelName);
         }
 
         String recipientName = result.getMessage();
@@ -232,55 +268,92 @@ public class ServerThreads extends Thread {
 
             String content = getUserInput("[Enter the content of the message:]");
 
-            User recipient = findUserByName(recipientName);
+            if (isItPersonalMessage) {
+                User recipient = findUserByName(recipientName);
 
-            if (recipient != null) {
-                recipient.registerMessage(title, content, loggedInUser.getUsername());
+                if (recipient != null) {
 
-                new IncreaseNotificationParametersThread(loggedInUsers, "SolicitationsMade", true)
-                        .start();
+                    ///// PROTOCOLS START /////
+                    /*
+                     * if (loggedInUser instanceof Private && recipient instanceof Private) {
+                     * 
+                     * userInput =
+                     * getUserInput("[Capuchin, this is Tamarin. Solicitation from Capuchin to Tamarin.]"
+                     * );
+                     * System.out.println("User input: " + userInput);
+                     * 
+                     * if (!userInput.equals("Tamarin, this is Capuchin. Affirmative.")) {
+                     * break;
+                     * }
+                     * 
+                     * this.out.println("[Details and options, over.]");
+                     * } else
+                     * 
+                     * if (loggedInUser instanceof Private && recipient instanceof Sergeant) {
+                     * 
+                     * userInput =
+                     * getUserInput("[Capuchin calling Clownfish. Solicitation from Capuchin to Clownfish.]"
+                     * );
+                     * System.out.println("User input: " + userInput);
+                     * 
+                     * if (!userInput.equals("Clownfish responding to Capuchin. Confirmed.")) {
+                     * break;
+                     * }
+                     * 
+                     * this.out.println("[Details and options, over.]");
+                     * }
+                     */
+                    ///// PROTOCOLS END /////
+                    recipient.registerPersonalMessage(title, content, loggedInUser.getUsername());
 
-                return new ReplyObject(true, "[Message sent successfully.]");
+                    new IncreaseNotificationParametersThread("numberSolicitations", true)
+                            .start();
+
+                    return new ReplyObject(true, "[Message sent successfully.]");
+                } else {
+                    return new ReplyObject(false, "[User not found.]");
+                }
             } else {
-                this.out.println("[User not found.]");
-                return new ReplyObject(false, "User not found.");
+                Channel channel = findChannelByName(recipientName);
+
+                if (channel != null) {
+                    loggedInUser.registerChannelMessage(title, content, channel.getName());
+
+                    new IncreaseNotificationParametersThread("numberSolicitations", true)
+                            .start();
+
+                    return new ReplyObject(true, "[Message sent successfully.]");
+                } else {
+                    return new ReplyObject(false, "[Channel not found.]");
+                }
             }
         }
 
-        return new ReplyObject(false, "Message not sent.");
+        return new ReplyObject(false, "[Message not sent.]");
     }
 
     /**
      * Method to send a reply to a message
      */
-    private ReplyObject sendReply(User loggedInUser) {
-        ReplyObject result = selectTarget(loggedInUser.getMessages());
+    private ReplyObject sendReply(User loggedInUser, String channelName, Message message) {
+        if (message != null) {
 
-        String messageTitle = result.getMessage();
+            String replyContent = getUserInput("[Enter the content of the reply:]");
 
-        if (!messageTitle.isEmpty()) {
-            Message message = loggedInUser.findMessageByTitle(messageTitle);
+            this.out.println("[Do you want to ping the sender of the message?]");
 
-            if (message != null) {
-                String replyContent = getUserInput("[Enter the content of the reply:]");
+            int pingSenderInt = getMenuOption(List.of(0, 1, 2), List.of("Back", "Yes", "No"));
 
-                this.out.println("[Do you want to ping the sender of the message?]");
+            boolean pingSender = pingSenderInt == 1 ? true : false;
 
-                int pingSenderInt = getMenuOption(List.of(0, 1, 2), List.of("Back", "Yes", "No"));
+            loggedInUser.sendReply(replyContent, message.getTitle(), message.getSender(), message.getChannel(),
+                    pingSender);
 
-                boolean pingSender = pingSenderInt == 1 ? true : false;
+            return new ReplyObject(true, "[Reply sent successfully.]");
 
-                loggedInUser.sendReply(replyContent, message.getTitle(), message.getSender(), message.getChannel(),
-                        pingSender);
-
-                return new ReplyObject(true, "[Reply sent successfully.]");
-            } else {
-                this.out.println("[Message not found.]");
-                return new ReplyObject(false, "Message not found.");
-            }
+        } else {
+            return new ReplyObject(false, "[Reply not sent.]");
         }
-
-        return new ReplyObject(false, "Reply not sent.");
     }
 
     /**
@@ -321,14 +394,16 @@ public class ServerThreads extends Thread {
      */
     private void authMenu() {
         int optionSelected = -1;
+
         while (optionSelected != 0) {
             optionSelected = getMenuOption(List.of(0, 1, 2), List.of("Exit", "Register", "Login"));
+
             switch (optionSelected) {
                 case 1:
                     registerForm();
                     break;
                 case 2:
-                    loginForm();
+                    loginForm(optionSelected);
                     break;
                 default:
                     this.out.println("[Quitting...]");
@@ -402,7 +477,7 @@ public class ServerThreads extends Thread {
     /**
      * Method to login a user
      */
-    private void loginForm() {
+    private void loginForm(int optionSelected) {
         this.clearTerminal();
 
         String username = getUserInput("[Enter your username:]");
@@ -414,15 +489,24 @@ public class ServerThreads extends Thread {
         if (!isLoggedIn.getWasOperationSuccessful()) {
             this.out.println("[Credentials are incorrect.]");
         } else {
+            for (User user : this.loggedInUsers) {
+                if (user.getUsername().equals(isLoggedIn.getUser().getUsername())) {
+                    this.clearTerminal();
+
+                    this.out.println("[User already logged in.]");
+                    return;
+                }
+            }
+
             // User logged in successfully
             this.clearTerminal();
-            this.out.println("[User logged in successfully.]");
             // Create a thread to increment number of logged in users
             this.loggedInUsers.add(isLoggedIn.getUser());
-            // new IncreaseNotificationParametersThread(loggedInUsers, "ConnectionsMade",
-            // true)
-            // .start();
-            userMenu(isLoggedIn.getUser());
+            this.out.println("[User logged in successfully.]");
+            new IncreaseNotificationParametersThread("numberConnections",
+                    true)
+                    .start();
+            userMenu(isLoggedIn.getUser(), optionSelected);
         }
     }
 
@@ -431,29 +515,46 @@ public class ServerThreads extends Thread {
      * 
      * @param username the username of the user
      */
-    private void userMenu(User loggedInUser) {
-        // if (!isHeartbeatBeingRead) {
-        // isHeartbeatBeingRead = true;
-        // HeartbeatReaderThread heartbeatReaderThread = new
-        // HeartbeatReaderThread(loggedInUser, scanner,
-        // loggedInUsers);
-        // heartbeatReaderThread.start();
-        // }
+    private void userMenu(User loggedInUser, int optionSelected) {
+        if (!isHeartbeatBeingRead) {
+            isHeartbeatBeingRead = true;
+            HeartbeatReaderThread heartbeatReaderThread = new HeartbeatReaderThread(loggedInUser,
+                    loggedInUsers);
+            heartbeatReaderThread.start();
+
+            this.heartbeatThreads.add(heartbeatReaderThread);
+        }
 
         boolean listening = true;
-        int optionSelected = -1;
+        optionSelected = -1;
+
+        List<Integer> options;
+        List<String> messages;
+
+        options = List.of(0, 1, 2, 3, 4);
+        messages = List.of("Back", "Send Message", "Approve Messages", "See all messages",
+                "View Channels");
 
         while (optionSelected != 0) {
-            List<Integer> options;
-            List<String> messages;
-
-            options = List.of(0, 1, 2, 3, 4);
-            messages = List.of("Back", "Send Message", "Approve Messages", "See all messages",
-                    "View Channels");
-
             optionSelected = getMenuOption(options, messages);
 
             this.clearTerminal();
+
+            if (optionSelected == 0) {
+                if (isHeartbeatBeingRead) {
+                    isHeartbeatBeingRead = false;
+
+                    for (HeartbeatReaderThread heartbeatReaderThread : this.heartbeatThreads) {
+                        if (heartbeatReaderThread.getLoggedInUser().getUsername()
+                                .equals(loggedInUser.getUsername())) {
+                            heartbeatReaderThread.interrupt();
+                            this.heartbeatThreads.remove(heartbeatReaderThread);
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
 
             handleMenuOption(loggedInUser, optionSelected, listening);
         }
@@ -470,12 +571,8 @@ public class ServerThreads extends Thread {
 
         switch (optionSelected) {
             case 1:
-                // Protocolo
-
-                // Protocolo termina
-
                 // Começa a pedir o titulo e o conteudo da mensagem
-                result = this.sendMessage(loggedInUser, true);
+                result = this.sendMessage(loggedInUser, true, "");
 
                 this.clearTerminal();
 
@@ -487,15 +584,9 @@ public class ServerThreads extends Thread {
 
                 break;
             case 2:
-                loggedInUser.receivePersonalMessages(); // Loads messages into array
+                loggedInUser.receivePersonalMessages();
 
-                if (loggedInUser.getMessages().isEmpty()) {
-                    this.clearTerminal();
-                    this.out.println("[No messages to display.]");
-                    break;
-                }
-
-                result = selectTarget(loggedInUser.getMessages()); // Lists messages
+                result = selectTarget(loggedInUser.getMessages());
                 messageTitle = result.getMessage();
 
                 this.clearTerminal();
@@ -517,7 +608,7 @@ public class ServerThreads extends Thread {
                             message.setApproved("Approved by " + loggedInUser.getUsername());
                             message.UpdateEntryInFile();
                             this.out.println("[Message approved successfully.]");
-                            new IncreaseNotificationParametersThread(loggedInUsers, "ApprovalsMade", true)
+                            new IncreaseNotificationParametersThread("numberApprovals", true)
                                     .start();
                         } else if (selectedOption == 2) {
                             this.out.println("[Message not approved.]");
@@ -528,6 +619,8 @@ public class ServerThreads extends Thread {
                 break;
             case 3:
                 loggedInUser.receivePersonalMessages();
+
+                System.out.println("Mensagens do utilizador: " + loggedInUser.getMessages());
 
                 if (loggedInUser.getMessages().isEmpty()) {
                     this.clearTerminal();
@@ -551,6 +644,11 @@ public class ServerThreads extends Thread {
                         this.out.println("Sender: " + message.getSender());
                         this.out.println("Recipient: " + message.getRecipient());
                         this.out.println("Approved: " + message.getApproved());
+
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        String formattedDateTime = message.getTimestamp().format(formatter);
+
+                        this.out.println("Messages sent at: " + formattedDateTime);
                         this.out.println("=================================================");
                     } else {
                         this.out.println("[Message not found...]");
@@ -558,28 +656,29 @@ public class ServerThreads extends Thread {
                 }
                 break;
             case 4:
-                int selectedOption = -1;
+                optionSelected = -1;
+
+                List<String> messages = new ArrayList<String>();
+                List<Integer> options = new ArrayList<Integer>();
+
+                if (loggedInUser instanceof General) {
+                    messages = List.of("Back", "Join Approvals Notification Channel",
+                            "Join Connections Notification Channel",
+                            "Join Solicitations Notification Channel", "Join a user created channel",
+                            "Create a channel", "Delete a channel");
+                    options = List.of(0, 1, 2, 3, 4, 5, 6);
+                } else {
+                    messages = List.of("Back", "Join Approvals Notification Channel",
+                            "Join Solicitations Notification Channel", "Join a user created channel");
+                    options = List.of(0, 1, 2, 3);
+                }
 
                 while (optionSelected != 0) {
+                    optionSelected = getMenuOption(options, messages);
 
-                    List<String> messages = new ArrayList<String>();
-                    List<Integer> options = new ArrayList<Integer>();
+                    this.clearTerminal();
 
-                    if (loggedInUser instanceof General) {
-                        messages = List.of("Back", "Join Approvals Notification Channel",
-                                "Join Connections Notification Channel",
-                                "Join Solicitations Notification Channel", "Join a user created channel",
-                                "Create a channel", "Delete a channel");
-                        options = List.of(0, 1, 2, 3, 4, 5, 6);
-                    } else {
-                        messages = List.of("Back", "Join Approvals Notification Channel",
-                                "Join Solicitations Notification Channel", "Join a user created channel");
-                        options = List.of(0, 1, 2, 3);
-                    }
-
-                    selectedOption = getMenuOption(options, messages);
-
-                    communicationChannelsMenu(loggedInUser, selectedOption, createdChannels);
+                    communicationChannelsMenu(loggedInUser, optionSelected);
                 }
 
                 break;
@@ -591,16 +690,16 @@ public class ServerThreads extends Thread {
     /**
      * Method to handle the communication channels menu
      * 
-     * @param loggedInUser          The logged in user
-     * @param optionSelected        The option selected by the user
-     * @param listOfCreatedChannels The list of created channels
+     * @param loggedInUser   The logged in user
+     * @param optionSelected The option selected by the user
      */
-    private void communicationChannelsMenu(User loggedInUser, int optionSelected,
-            List<Channel> listOfCreatedChannels) {
+    private void communicationChannelsMenu(User loggedInUser, int optionSelected) {
 
         ReplyObject result;
         String nameOfTheChannel;
         boolean doesChannelExist;
+
+        System.out.println("Option selected: " + optionSelected);
 
         switch (optionSelected) {
             case 1:
@@ -608,6 +707,10 @@ public class ServerThreads extends Thread {
                 this.out.println("JOIN_CHANNEL:" + NotifierThreads.APPROVALS_MADE_CHANNELADDR);
 
                 listeningToUserInputWhileInChannel(true);
+                System.out.println("Returned from listening to user input");
+                System.out.println(this.out.checkError());
+                this.out.flush();
+                this.out.println("Returned from listening to user input");
                 break;
             case 2:
                 // Join Connections Notification Channel
@@ -629,14 +732,27 @@ public class ServerThreads extends Thread {
 
                     listeningToUserInputWhileInChannel(true);
                 } else {
-                    result = selectTarget(listOfCreatedChannels);
+                    result = selectTarget(this.createdChannels);
 
                     nameOfTheChannel = result.getMessage();
 
                     doesChannelExist = ChannelHandler.checkIfChannelExists(nameOfTheChannel);
 
                     if (doesChannelExist) {
-                        clientJoinedCommunicationChannelMenu(nameOfTheChannel, loggedInUser);
+                        optionSelected = -1;
+
+                        List<String> messages = List.of("Back", "Send Message", "See all messages",
+                                "Reply to a message",
+                                "Leave the channel");
+                        List<Integer> options = List.of(0, 1, 2, 3, 4);
+
+                        while (optionSelected != 0) {
+                            optionSelected = getMenuOption(options, messages);
+
+                            this.clearTerminal();
+
+                            clientJoinedCommunicationChannelMenu(nameOfTheChannel, loggedInUser, optionSelected);
+                        }
                     } else {
                         this.out.println("[Channel not found.]");
                     }
@@ -645,7 +761,7 @@ public class ServerThreads extends Thread {
                 break;
             case 4:
                 // Join a user created channel
-                result = selectTarget(listOfCreatedChannels);
+                result = selectTarget(this.createdChannels);
 
                 nameOfTheChannel = result.getMessage();
 
@@ -655,13 +771,12 @@ public class ServerThreads extends Thread {
                     optionSelected = -1;
 
                     while (optionSelected != 0) {
-                        List<String> messages = List.of("Back", "Send Message", "See all messages",
-                                "Reply to a message",
-                                "Leave the channel");
-                        List<Integer> options = List.of(0, 1, 2, 3, 4);
+                        List<String> messages = List.of("Leave the channel", "Send Message", "See all messages",
+                                "Reply to a message");
+                        List<Integer> options = List.of(0, 1, 2, 3);
 
                         optionSelected = getMenuOption(options, messages);
-                        clientJoinedCommunicationChannelMenu(nameOfTheChannel, loggedInUser);
+                        clientJoinedCommunicationChannelMenu(nameOfTheChannel, loggedInUser, optionSelected);
                     }
                 } else {
                     this.out.println("[Channel not found.]");
@@ -678,7 +793,7 @@ public class ServerThreads extends Thread {
                     this.out.println(result.getMessage());
 
                     if (result.getWasOperationSuccessful()) {
-                        listOfCreatedChannels.add(result.getChannel());
+                        this.createdChannels.add(result.getChannel());
                     }
                 }
 
@@ -687,7 +802,7 @@ public class ServerThreads extends Thread {
                 if (loggedInUser instanceof General) {
 
                     // Delete a channel
-                    result = selectTarget(listOfCreatedChannels);
+                    result = selectTarget(this.createdChannels);
 
                     nameOfTheChannel = result.getMessage();
 
@@ -695,6 +810,12 @@ public class ServerThreads extends Thread {
 
                     if (result.getWasOperationSuccessful()) {
                         this.out.println("[Channel deleted successfully.]");
+                        for (Channel channel : this.createdChannels) {
+                            if (channel.getName().equals(nameOfTheChannel)) {
+                                this.createdChannels.remove(channel);
+                                break;
+                            }
+                        }
                     } else {
                         this.out.println("[Channel not found.]");
                     }
@@ -712,28 +833,13 @@ public class ServerThreads extends Thread {
      * 
      * @param nameOfTheChannel The name of the channel
      */
-    private void clientJoinedCommunicationChannelMenu(String nameOfTheChannel, User loggedInUser) {
-        // Display option to send a message
-
-        // Display option to see all messages
-
-        // Display option to reply to a message
-
-        // Display option to leave the channel
-        int optionSelected = -1;
-
-        List<String> messages = List.of("Back", "Send Message", "See all messages", "Reply to a message",
-                "Leave the channel");
-        List<Integer> options = List.of(0, 1, 2, 3, 4);
-
-        optionSelected = getMenuOption(options, messages);
-
+    private void clientJoinedCommunicationChannelMenu(String nameOfTheChannel, User loggedInUser, int optionSelected) {
         ReplyObject result;
 
         switch (optionSelected) {
             case 1:
                 // Send Message
-                result = this.sendMessage(loggedInUser, false);
+                result = this.sendMessage(loggedInUser, false, nameOfTheChannel);
 
                 this.clearTerminal();
 
@@ -767,12 +873,33 @@ public class ServerThreads extends Thread {
                         List<Reply> replies = Reply.readRepliesFromFileForMessage(message.getTitle());
 
                         this.out.println("===============Message_Information===============");
+                        this.out.println("Channel: " + message.getChannel());
                         this.out.println("Title: " + message.getTitle());
                         this.out.println("Content: " + message.getContent());
                         this.out.println("Sender: " + message.getSender());
-                        this.out.println("Recipient: " + message.getRecipient());
-                        this.out.println("Approved: " + message.getApproved());
+
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        String formattedDateTime = message.getTimestamp().format(formatter);
+
+                        this.out.println("Messages sent at: " + formattedDateTime);
                         this.out.println("=================================================");
+
+                        this.out.println("=====================Replies=====================");
+                        for (Reply reply : replies) {
+                            this.out.println("User: " + reply.getOriginalMessageSender());
+
+                            if (reply.getPingOriginalMessageSender()) {
+                                this.out.println("Content: @" + reply.getSender() + " " + reply.getContent());
+                            } else {
+                                this.out.println("Content: " + reply.getContent());
+                            }
+
+                            String formattedDateTimeReply = reply.getDate().format(formatter);
+
+                            this.out.println("Replied at:" + formattedDateTimeReply);
+                            this.out.println("=================================================");
+                        }
+
                     } else {
                         this.out.println("[Message not found...]");
                     }
@@ -806,7 +933,7 @@ public class ServerThreads extends Thread {
                         this.out.println("Content: " + message.getContent());
                         this.out.println("=================================================\n");
 
-                        result = this.sendReply(loggedInUser);
+                        result = this.sendReply(loggedInUser, nameOfTheChannel, message);
                     }
                 }
                 break;
@@ -824,6 +951,18 @@ public class ServerThreads extends Thread {
     public void run() {
         try {
             authMenu();
+
+        } catch (Exception e) {
+            for (HeartbeatReaderThread heartbeatReaderThread : this.heartbeatThreads) {
+                for (User user : this.loggedInUsers) {
+                    if (heartbeatReaderThread.getLoggedInUser().getUsername().equals(user.getUsername())) {
+                        heartbeatReaderThread.interrupt();
+                        this.heartbeatThreads.remove(heartbeatReaderThread);
+                        this.loggedInUsers.remove(user);
+                        break;
+                    }
+                }
+            }
         } finally {
             try {
                 clientSocket.close();

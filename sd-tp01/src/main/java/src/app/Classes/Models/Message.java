@@ -40,6 +40,15 @@ public class Message implements IGetName {
         this.timestamp = LocalDateTime.now();
     }
 
+    public Message(String sender, String channel, String title, String content) {
+        this.sender = sender;
+        this.channel = channel;
+        this.title = title;
+        this.content = content;
+        this.approved = "";
+        this.timestamp = LocalDateTime.now();
+    }
+
     // Constructor for message between users with specified approved
     public Message(String sender, String recipient, String channel, String title, String content, String approved,
             LocalDateTime timestamp) {
@@ -142,12 +151,31 @@ public class Message implements IGetName {
                 for (Object message : jsonMessages) {
                     JSONObject jsonMessage = (JSONObject) message;
 
+                    System.out.println(jsonMessage);
+
                     String sender = (String) jsonMessage.get("sender");
                     String recipient = (String) jsonMessage.get("recipient");
                     String title = (String) jsonMessage.get("title");
+
+                    System.out.println("Reached here");
                     String content = (String) jsonMessage.get("content");
                     String approved = (String) jsonMessage.get("approved");
+
                     LocalDateTime timestamp = LocalDateTime.parse((String) jsonMessage.get("timestamp"));
+
+                    if (sender == null ||
+                            recipient == null ||
+                            title == null ||
+                            content == null ||
+                            approved == null ||
+                            timestamp == null) {
+                        System.out.println(sender);
+                        System.out.println(recipient);
+                        System.out.println(title);
+                        System.out.println(content);
+                        System.out.println(approved);
+                        continue;
+                    }
 
                     Message newMessage = new Message(sender, recipient, "", title, content, approved, timestamp);
 
@@ -163,7 +191,7 @@ public class Message implements IGetName {
 
             return new ArrayList<>();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
 
         return new ArrayList<>();
@@ -196,6 +224,15 @@ public class Message implements IGetName {
                     String approved = (String) jsonMessage.get("approved");
                     LocalDateTime timestamp = LocalDateTime.parse((String) jsonMessage.get("timestamp"));
 
+                    if (sender == null ||
+                            channel == null ||
+                            title == null ||
+                            content == null ||
+                            approved == null ||
+                            timestamp == null) {
+                        continue;
+                    }
+
                     Message newMessage = new Message(sender, "", channel, title, content, approved, timestamp);
 
                     if (newMessage.getChannel().equals(nameOfChannel)) {
@@ -210,7 +247,7 @@ public class Message implements IGetName {
 
             return new ArrayList<>();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
 
         return new ArrayList<>();

@@ -27,7 +27,7 @@ public interface IUser extends IGetName {
     public void setRank(String rank);
 
     // Methods
-    public void registerMessage(String title, String content, String senderOfTheMessage);
+    public void registerPersonalMessage(String title, String content, String senderOfTheMessage);
 
     public void requestComplexTask(User approver);
 }
