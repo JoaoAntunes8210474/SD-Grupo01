@@ -20,40 +20,39 @@ import src.app.Classes.Threads.MessageThread;
 import src.app.Interfaces.IGetName;
 
 public class Message implements IGetName {
+    // Attributes
     private String sender;
     private String recipient;
+    private String channel;
     private String title;
     private String content;
     private String approved;
     private LocalDateTime timestamp;
 
-    public Message(String sender, String recipient, String title, String content) {
+    // Constructor for message between users or to a channel
+    public Message(String sender, String recipient, String channel, String title, String content) {
         this.sender = sender;
         this.recipient = recipient;
+        this.channel = channel;
         this.title = title;
         this.content = content;
         this.approved = "Awaiting approval";
         this.timestamp = LocalDateTime.now();
     }
 
-    public Message(String sender, String recipient, String title, String content, LocalDateTime timestamp) {
-        this.sender = sender;
-        this.recipient = recipient;
-        this.title = title;
-        this.content = content;
-        this.timestamp = timestamp;
-    }
-
-    public Message(String sender, String recipient, String title, String content, String approved,
+    // Constructor for message between users with specified approved
+    public Message(String sender, String recipient, String channel, String title, String content, String approved,
             LocalDateTime timestamp) {
         this.sender = sender;
         this.recipient = recipient;
+        this.channel = channel;
         this.title = title;
         this.content = content;
         this.approved = approved;
         this.timestamp = timestamp;
     }
 
+    // Getters
     public String getSender() {
         return sender;
     }
@@ -78,6 +77,11 @@ public class Message implements IGetName {
         return timestamp;
     }
 
+    public String getChannel() {
+        return channel;
+    }
+
+    // Setters
     public void setSender(String sender) {
         this.sender = sender;
     }
@@ -103,6 +107,13 @@ public class Message implements IGetName {
         this.timestamp = timestamp;
     }
 
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    /**
+     * Function to display the message in a readable format
+     */
     @Override
     public String toString() {
         return "Sender: " + sender +
@@ -111,9 +122,9 @@ public class Message implements IGetName {
                 "\nTimestamp: " + timestamp;
     }
 
-    public static List<Message> readMessagesFromFileForUser(String recipient) {
+    public static List<Message> readMessagesFromFileForUser(String nameOfRecipient) {
         try {
-            Path path = Path.of(MessageThread.MESSAGE_FILE_PATH);
+            Path path = Path.of(MessageThread.FILE_PATH);
             File file = new File(path.toString());
 
             long fileSize = Files.size(path);
@@ -132,15 +143,15 @@ public class Message implements IGetName {
                     JSONObject jsonMessage = (JSONObject) message;
 
                     String sender = (String) jsonMessage.get("sender");
-                    String recipient1 = (String) jsonMessage.get("recipient");
+                    String recipient = (String) jsonMessage.get("recipient");
                     String title = (String) jsonMessage.get("title");
                     String content = (String) jsonMessage.get("content");
                     String approved = (String) jsonMessage.get("approved");
                     LocalDateTime timestamp = LocalDateTime.parse((String) jsonMessage.get("timestamp"));
 
-                    Message newMessage = new Message(sender, recipient1, title, content, approved, timestamp);
+                    Message newMessage = new Message(sender, recipient, "", title, content, approved, timestamp);
 
-                    if (newMessage.getRecipient().equals(recipient)) {
+                    if (newMessage.getRecipient().equals(nameOfRecipient)) {
                         userMessages.add(newMessage);
                     }
                 }
@@ -158,13 +169,60 @@ public class Message implements IGetName {
         return new ArrayList<>();
     }
 
+    public static List<Message> readMessagesFromFileForChannel(String nameOfChannel) {
+        try {
+            Path path = Path.of(MessageThread.FILE_PATH);
+            File file = new File(path.toString());
+
+            long fileSize = Files.size(path);
+
+            // Load messages from the file
+            if (fileSize > 0) {
+                // Read all messages from the file
+                FileReader fileReader = new FileReader(file);
+                JSONParser jsonParser = new JSONParser();
+                JSONObject jsonObject = (JSONObject) jsonParser.parse(fileReader);
+                JSONArray jsonMessages = (JSONArray) jsonObject.get("messages");
+
+                List<Message> channelMessages = new ArrayList<>();
+
+                for (Object message : jsonMessages) {
+                    JSONObject jsonMessage = (JSONObject) message;
+
+                    String sender = (String) jsonMessage.get("sender");
+                    String channel = (String) jsonMessage.get("channel");
+                    String title = (String) jsonMessage.get("title");
+                    String content = (String) jsonMessage.get("content");
+                    String approved = (String) jsonMessage.get("approved");
+                    LocalDateTime timestamp = LocalDateTime.parse((String) jsonMessage.get("timestamp"));
+
+                    Message newMessage = new Message(sender, "", channel, title, content, approved, timestamp);
+
+                    if (newMessage.getChannel().equals(nameOfChannel)) {
+                        channelMessages.add(newMessage);
+                    }
+                }
+
+                fileReader.close();
+
+                return channelMessages;
+            }
+
+            return new ArrayList<>();
+        } catch (Exception e) {
+
+        }
+
+        return new ArrayList<>();
+    }
+
     /**
      * Updates the message in the file with the instance's attributes
      */
     @SuppressWarnings("unchecked")
     public void UpdateEntryInFile() {
         try {
-            Path path = Path.of(MessageThread.MESSAGE_FILE_PATH);
+            Path path = Path.of(MessageThread.FILE_PATH);
             File file = new File(path.toString());
 
             long fileSize = Files.size(path);
@@ -183,10 +241,12 @@ public class Message implements IGetName {
                     String sender = (String) jsonMessage.get("sender");
                     String recipient = (String) jsonMessage.get("recipient");
                     String title = (String) jsonMessage.get("title");
+                    String channel = (String) jsonMessage.get("channel");
                     String content = (String) jsonMessage.get("content");
                     LocalDateTime timestamp = LocalDateTime.parse((String) jsonMessage.get("timestamp"));
 
                     if (this.sender.equals(sender) && this.recipient.equals(recipient) && this.title.equals(title)
+                            && this.channel.equals(channel)
                             && this.content.equals(content)
                             && this.timestamp.equals(timestamp)) {
 
@@ -194,6 +254,7 @@ public class Message implements IGetName {
                         JSONObject updatedMessage = new JSONObject();
                         updatedMessage.put("sender", this.sender);
                         updatedMessage.put("recipient", this.recipient);
+                        updatedMessage.put("title", this.title);
                         updatedMessage.put("title", this.title);
                         updatedMessage.put("content", this.content);
                         updatedMessage.put("approved", this.approved);

@@ -6,16 +6,19 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import src.app.Classes.Models.Channel;
 import src.app.Classes.Models.User;
 import src.app.Classes.Threads.ServerThreads;
 
 public class Server {
     private List<User> users; // List to store logged in users
     private List<User> allUsers; // List to store all registered users
+    private List<Channel> channels; // List to store all channels
 
     public Server() {
         this.users = new ArrayList<>();
         this.allUsers = AuthHandler.getAllRegisteredUsers();
+        this.channels = ChannelHandler.getAllChannels();
     }
 
     /**
@@ -55,7 +58,7 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
 
                 // Handle each client connection in a separate thread
-                ServerThreads serverThreads = new ServerThreads(clientSocket, this.users, this.allUsers);
+                ServerThreads serverThreads = new ServerThreads(clientSocket, this.users, this.allUsers, this.channels);
                 serverThreads.start();
             }
         } catch (IOException e) {

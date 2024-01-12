@@ -1,16 +1,10 @@
 package src.app.Classes.Models;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import src.app.Classes.Threads.MessageThread;
+import src.app.Classes.Threads.ReplyThread;
 import src.app.Interfaces.IUser;
 
 /**
@@ -19,19 +13,15 @@ import src.app.Interfaces.IUser;
  * @implements IUser
  */
 public abstract class User implements IUser {
-
-    // File path for storing all messages
-    private static final String MESSAGES_FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
-
     // Attributes
-    private String name;
+    private String username;
     private String password;
     private String rank;
     private List<Message> messages; // List to store messages
 
     // Constructor Method
     public User(String name, String password, String rank) {
-        this.name = name;
+        this.username = name;
         this.password = password;
         this.rank = rank;
         this.messages = new ArrayList<>();
@@ -44,8 +34,18 @@ public abstract class User implements IUser {
      * 
      * @return the name of the client
      */
+    @Override
     public String getName() {
-        return this.name;
+        return this.username + " ---- " + this.rank;
+    }
+
+    /**
+     * Get the name of the client
+     * 
+     * @return the name of the client
+     */
+    public String getUsername() {
+        return this.username;
     }
 
     /**
@@ -80,8 +80,8 @@ public abstract class User implements IUser {
      * 
      * @param name the new name of the client
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String name) {
+        this.username = name;
     }
 
     /**
@@ -111,7 +111,7 @@ public abstract class User implements IUser {
      * 
      */
     public void requestComplexTask(User approver) {
-        System.out.println(this.name + " has requested approval for a complex task from " + approver.getName());
+        System.out.println(this.username + " has requested approval for a complex task from " + approver.getUsername());
         // Add logic for handling the approval process
     }
 
@@ -121,7 +121,7 @@ public abstract class User implements IUser {
      * @return the user's information
      */
     public String toString() {
-        return "Name: " + this.name + "\nPassword: " + this.password + "\nRank: " + this.rank + "\n";
+        return "Name: " + this.username + "\nPassword: " + this.password + "\nRank: " + this.rank + "\n";
     }
 
     /**
@@ -135,85 +135,35 @@ public abstract class User implements IUser {
     public void registerMessage(String title, String content, String senderOfTheMessage) {
         // Write to json file the message, the sender and the recipient
         MessageThread messageThread = new MessageThread(
-                new Message(senderOfTheMessage, this.name, title, content));
+                new Message(senderOfTheMessage, this.username, "", title, content));
         messageThread.start();
     }
 
+    /**
+     * Send a reply to a message
+     * @return ReplyObject
+     */
+    public void sendReply(String content, String originalMessageTitle, String recipient,
+            String nameOfTheChannel, boolean pingRecipient) {
+        ReplyThread replyThread = new ReplyThread(new Reply(content, this.username, originalMessageTitle, recipient,
+                nameOfTheChannel, pingRecipient));
+        replyThread.start();
+    }
+
     // Method to receive a message
-    public void receiveMessages() {
-        this.messages = Message.readMessagesFromFileForUser(this.name);
+    public void receivePersonalMessages() {
+        this.messages = Message.readMessagesFromFileForUser(this.username);
     }
 
-    // Method to load messages for the authenticated user from the global
-    // Messages.json file
-    public void loadMessagesFromFile() {
-        try {
-            Path path = Path.of(MESSAGES_FILE_PATH);
-
-            long fileSize = Files.size(path);
-
-            if (fileSize > 0) {
-                // Read all messages from the file
-                FileReader fileReader = new FileReader(path.toFile());
-                List<Message> allMessages = readMessagesFromJson(fileReader);
-                fileReader.close();
-
-                // Filter messages based on the authenticated user being the recipient
-                // List<Message> userMessages = allMessages.stream()
-                // .filter(message -> message.getRecipient().equals(this.name))
-                // .collect(Collectors.toList());
-
-                // Alternative way to filter messages based on the authenticated user being
-                List<Message> userMessages = new ArrayList<>();
-                for (Message message : allMessages) {
-                    if (message.getRecipient().equals(this.name)) {
-                        userMessages.add(message);
-                    }
-                }
-
-                // Update the user's messages
-                this.messages.addAll(userMessages);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void receiveChannelMessages(String channel) {
+        this.messages = Message.readMessagesFromFileForChannel(channel);
     }
 
-    // Helper method to read messages from JSON
-    private List<Message> readMessagesFromJson(FileReader fileReader) {
-        List<Message> loadedMessages = new ArrayList<>();
-
-        try {
-            JSONParser jsonParser = new JSONParser();
-            JSONObject jsonObject = (JSONObject) jsonParser.parse(fileReader);
-            JSONArray jsonMessages = (JSONArray) jsonObject.get("messages");
-
-            if (jsonMessages == null) {
-                return loadedMessages;
-            }
-
-            for (Object obj : jsonMessages) {
-                JSONObject jsonMessage = (JSONObject) obj;
-                String sender = (String) jsonMessage.get("sender");
-                String recipient = (String) jsonMessage.get("recipient");
-                String title = (String) jsonMessage.get("title");
-                String content = (String) jsonMessage.get("content");
-
-                // You may need to parse the timestamp string into LocalDateTime
-                // LocalDateTime timestamp = LocalDateTime.parse((String)
-                // jsonMessage.get("timestamp"));
-
-                Message message = new Message(sender, recipient, title, content);
-                // message.setTimestamp(timestamp); // Set the timestamp if needed
-                loadedMessages.add(message);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return loadedMessages;
-    }
-
+    /**
+     * Method to find a message by its title
+     * @param title the title of the message to be found
+     * @return the message with the given title
+     */
     public Message findMessageByTitle(String title) {
         for (Message message : this.messages) {
             if (message.getTitle().equals(title)) {

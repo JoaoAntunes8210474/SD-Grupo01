@@ -6,6 +6,7 @@ public class ReplyObject {
     private boolean wasOperationSuccessful;
     private String message;
     private User user;
+    private Channel channel;
 
     // Constructors
 
@@ -16,11 +17,18 @@ public class ReplyObject {
         this.user = null;
     }
 
-    // Constructor with all parameters
+    // Constructor with all parameters -- user
     public ReplyObject(boolean success, String message, User user) {
         this.wasOperationSuccessful = success;
         this.message = message;
         this.user = user;
+    }
+
+    // Constructor with all parameters -- channel
+    public ReplyObject(boolean success, String message, Channel channel) {
+        this.wasOperationSuccessful = success;
+        this.message = message;
+        this.channel = channel;
     }
 
     // Constructor with only success and message
@@ -30,11 +38,18 @@ public class ReplyObject {
         this.user = null;
     }
 
-    // Constructor with only success
+    // Constructor with only success and user
     public ReplyObject(boolean success, User user) {
         this.wasOperationSuccessful = success;
         this.message = "";
         this.user = user;
+    }
+
+    // Constructor with only success and channel
+    public ReplyObject(boolean success, Channel channel) {
+        this.wasOperationSuccessful = success;
+        this.message = "";
+        this.channel = channel;
     }
 
     // Constructor with only success
@@ -55,6 +70,19 @@ public class ReplyObject {
 
     public User getUser() {
         return this.user;
+    }
+
+    public Channel getChannel() {
+        return this.channel;
+    }
+
+    // Setters
+    public void setWasOperationSuccessful(boolean success) {
+        this.wasOperationSuccessful = success;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public String toString() {

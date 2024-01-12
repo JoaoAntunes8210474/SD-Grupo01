@@ -19,9 +19,6 @@ import com.google.gson.GsonBuilder;
 public class IncreaseNotificationParametersThread extends Thread {
     private static final String FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Stats.json";
 
-    // Logged in user
-    private User loggedInUser;
-
     // List of all logged in users
     private List<User> loggedInUsers;
 
@@ -31,18 +28,19 @@ public class IncreaseNotificationParametersThread extends Thread {
     // Variable to check if it is an increment or a decrement
     private boolean isItAnIncrement;
 
-    public IncreaseNotificationParametersThread(User loggedInUser, List<User> loggedInUsers, String itemToIncrement,
+    public IncreaseNotificationParametersThread(List<User> loggedInUsers, String itemToIncrement,
             boolean isItAnIncrement) {
         super("[IncreaseNotificationParametersThread]");
 
-        this.loggedInUser = loggedInUser;
         this.loggedInUsers = loggedInUsers;
         this.itemToIncrement = itemToIncrement;
+        this.isItAnIncrement = isItAnIncrement;
     }
 
     /**
      * Change the number of solicitations made based on the boolean isItAnIncrement
      */
+    @SuppressWarnings("unchecked")
     private void changeSolicitationsMade() {
         try {
             // Read the file
@@ -112,6 +110,7 @@ public class IncreaseNotificationParametersThread extends Thread {
     /**
      * Change the number of approvals made based on the boolean isItAnIncrement
      */
+    @SuppressWarnings("unchecked")
     private void changeApprovalsMade() {
         try {
             // Read the file
@@ -182,6 +181,7 @@ public class IncreaseNotificationParametersThread extends Thread {
     /**
      * Change the number of connections made based on the boolean isItAnIncrement
      */
+    @SuppressWarnings("unchecked")
     private void changeConnectionsMade() {
         try {
             // Read the file

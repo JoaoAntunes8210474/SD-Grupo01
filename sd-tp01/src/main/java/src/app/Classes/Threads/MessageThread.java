@@ -19,7 +19,7 @@ public class MessageThread extends Thread {
     private Message message;
 
     // File path for storing messages
-    public static final String MESSAGE_FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
+    public static final String FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
 
     public MessageThread(Message message) {
         this.message = message;
@@ -31,7 +31,7 @@ public class MessageThread extends Thread {
         // Synchronize access to the file to ensure thread safety
         synchronized (MessageThread.class) {
             try {
-                Path path = Path.of(MESSAGE_FILE_PATH);
+                Path path = Path.of(FILE_PATH);
                 File file = new File(path.toString());
 
                 // Check if the file is empty
@@ -57,7 +57,9 @@ public class MessageThread extends Thread {
                 jsonMessage.put("sender", this.message.getSender());
                 jsonMessage.put("recipient", this.message.getRecipient());
                 jsonMessage.put("title", this.message.getTitle());
+                jsonMessage.put("channel", this.message.getChannel());
                 jsonMessage.put("content", this.message.getContent());
+                jsonMessage.put("approved", this.message.getApproved());
                 jsonMessage.put("timestamp", this.message.getTimestamp().toString());
 
                 jsonMessages.add(jsonMessage);
@@ -76,7 +78,6 @@ public class MessageThread extends Thread {
 
                 fileReader.close();
                 fileWriter.close();
-
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (Exception e) {

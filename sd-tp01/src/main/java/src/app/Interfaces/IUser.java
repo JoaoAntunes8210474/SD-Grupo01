@@ -13,12 +13,14 @@ public interface IUser extends IGetName {
     // Getters
     public String getName();
 
+    public String getUsername();
+
     public String getPassword();
 
     public String getRank();
 
     // Setters
-    public void setName(String name);
+    public void setUsername(String username);
 
     public void setPassword(String password);
 

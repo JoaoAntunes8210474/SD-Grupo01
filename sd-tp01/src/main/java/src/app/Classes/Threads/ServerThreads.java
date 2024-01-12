@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Scanner;
 
 import src.app.Classes.AuthHandler;
+import src.app.Classes.ChannelHandler;
+import src.app.Classes.Models.Channel;
 import src.app.Classes.Models.General;
 import src.app.Classes.Models.Message;
+import src.app.Classes.Models.Reply;
 import src.app.Classes.Models.ReplyObject;
 import src.app.Classes.Models.User;
 
@@ -33,6 +36,9 @@ public class ServerThreads extends Thread {
     // List to store all registered users
     private List<User> registeredUsers;
 
+    // List to store all channels
+    private List<Channel> createdChannels;
+
     // Scanner to read user input
     private Scanner scanner;
 
@@ -46,11 +52,15 @@ public class ServerThreads extends Thread {
      * @param clientSocket the socket to connect to the server
      * @param users        the list of logged in users
      */
-    public ServerThreads(Socket clientSocket, List<User> LoggedInUsers, List<User> registeredUsers) {
+    public ServerThreads(Socket clientSocket, List<User> LoggedInUsers, List<User> registeredUsers,
+            List<Channel> listOfCreatedChannels) {
         this.clientSocket = clientSocket;
         this.loggedInUsers = LoggedInUsers;
         this.registeredUsers = registeredUsers;
+        this.createdChannels = listOfCreatedChannels;
+
         this.isHeartbeatBeingRead = false;
+
         try {
             this.out = new PrintWriter(clientSocket.getOutputStream(), true);
             this.scanner = new Scanner(clientSocket.getInputStream());
@@ -116,6 +126,28 @@ public class ServerThreads extends Thread {
         return userInput.substring("userInput:".length());
     }
 
+    private String getUserInput(String label) {
+        String userInput = "";
+        boolean wasLabelDisplayed = false;
+
+        do {
+            if (!wasLabelDisplayed) {
+                this.out.println(label);
+            }
+
+            userInput = scanner.nextLine();
+
+            if (userInput.contains("userInput:")) {
+                userInput = this.removeUserInputPrefix(userInput);
+            } else {
+                userInput = "";
+                wasLabelDisplayed = true;
+            }
+        } while (userInput.isEmpty());
+
+        return userInput;
+    }
+
     /**
      * Find a user by name in the list of registered users
      * 
@@ -137,10 +169,11 @@ public class ServerThreads extends Thread {
      * If the user sends the message "userInput:0", stop listening and display the
      * previous menu
      * 
-     * @param listening
+     * @param listening boolean to control the loop
      */
     private void listeningToUserInputWhileInChannel(boolean listening) {
         String userInput;
+
         try {
             while (listening) {
                 userInput = scanner.nextLine();
@@ -160,7 +193,7 @@ public class ServerThreads extends Thread {
      */
     private void displayUserList(int listIndex, List<Integer> options, List<String> messages,
             List<? extends IGetName> targets) {
-        this.out.println("[List of registered users to send a message to:]");
+        this.out.println("[List of targets to choose from:]");
         this.out.println("-----------------------");
 
         options.add(0);
@@ -181,33 +214,30 @@ public class ServerThreads extends Thread {
     }
 
     /**
-     * Method to send a message to a user
+     * Method to send a message to a user or a channel
      */
-    private ReplyObject sendMessage(User loggedInUser) {
-        ReplyObject result = selectTarget(this.registeredUsers);
+    private ReplyObject sendMessage(User loggedInUser, boolean isItPersonalMessage) {
+        ReplyObject result;
+
+        if (isItPersonalMessage) {
+            result = selectTarget(this.registeredUsers);
+        } else {
+            result = selectTarget(this.createdChannels);
+        }
+
         String recipientName = result.getMessage();
 
         if (!recipientName.isEmpty()) {
-            this.out.println("\n[Message Title:]");
-            String title = scanner.nextLine();
+            String title = getUserInput("[Enter the title of the message:]");
 
-            if (title.contains("userInput:")) {
-                title = this.removeUserInputPrefix(title);
-            }
-
-            this.out.println("\n[Message Content:]");
-            String content = scanner.nextLine();
-
-            if (content.contains("userInput:")) {
-                content = this.removeUserInputPrefix(content);
-            }
+            String content = getUserInput("[Enter the content of the message:]");
 
             User recipient = findUserByName(recipientName);
 
             if (recipient != null) {
-                recipient.registerMessage(title, content, loggedInUser.getName());
+                recipient.registerMessage(title, content, loggedInUser.getUsername());
 
-                new IncreaseNotificationParametersThread(loggedInUser, loggedInUsers, "SolicitationsMade", true)
+                new IncreaseNotificationParametersThread(loggedInUsers, "SolicitationsMade", true)
                         .start();
 
                 return new ReplyObject(true, "[Message sent successfully.]");
@@ -218,6 +248,39 @@ public class ServerThreads extends Thread {
         }
 
         return new ReplyObject(false, "Message not sent.");
+    }
+
+    /**
+     * Method to send a reply to a message
+     */
+    private ReplyObject sendReply(User loggedInUser) {
+        ReplyObject result = selectTarget(loggedInUser.getMessages());
+
+        String messageTitle = result.getMessage();
+
+        if (!messageTitle.isEmpty()) {
+            Message message = loggedInUser.findMessageByTitle(messageTitle);
+
+            if (message != null) {
+                String replyContent = getUserInput("[Enter the content of the reply:]");
+
+                this.out.println("[Do you want to ping the sender of the message?]");
+
+                int pingSenderInt = getMenuOption(List.of(0, 1, 2), List.of("Back", "Yes", "No"));
+
+                boolean pingSender = pingSenderInt == 1 ? true : false;
+
+                loggedInUser.sendReply(replyContent, message.getTitle(), message.getSender(), message.getChannel(),
+                        pingSender);
+
+                return new ReplyObject(true, "[Reply sent successfully.]");
+            } else {
+                this.out.println("[Message not found.]");
+                return new ReplyObject(false, "Message not found.");
+            }
+        }
+
+        return new ReplyObject(false, "Reply not sent.");
     }
 
     /**
@@ -282,74 +345,44 @@ public class ServerThreads extends Thread {
     private void registerForm() {
         this.clearTerminal();
 
-        String username;
-        String password;
-        String rank;
-
         boolean isUsernameInvalid = false;
         boolean isPasswordInvalid = false;
         boolean isRankInvalid = false;
 
-        boolean wasUsernameMessageDisplayed = false;
-        boolean wasPasswordMessageDisplayed = false;
-        boolean wasRankMessageDisplayed = false;
+        String username;
+        String password;
+        String rank;
 
         do {
-            if (!wasUsernameMessageDisplayed) {
-                this.out.println("[Enter your username:]");
-            }
+            username = getUserInput("[Enter your username:]");
 
-            username = scanner.nextLine();
-
-            if (username.contains("userInput:")) {
-                username = this.removeUserInputPrefix(username);
-
-                if (!AuthHandler.validateClientUsername(username)) {
-                    isUsernameInvalid = true;
-                    this.out.println("[Invalid username.]\n[Username must have between 3 to 20 characters.]");
-                }
+            if (AuthHandler.validateClientUsername(username)) {
+                isUsernameInvalid = false;
             } else {
-                wasUsernameMessageDisplayed = true;
+                this.out.println("[Invalid username.]\n[Username must have between 3 to 20 characters.]");
+                isUsernameInvalid = true;
             }
         } while (isUsernameInvalid);
 
         do {
-            if (!wasPasswordMessageDisplayed) {
-                this.out.println("[Enter your password:]");
-            }
+            password = getUserInput("[Enter your password:]");
 
-            password = scanner.nextLine();
-
-            if (password.contains("userInput:")) {
-                password = this.removeUserInputPrefix(password);
-
-                if (!AuthHandler.validateClientPassword(password)) {
-                    isPasswordInvalid = true;
-                    this.out.println("[Invalid password.]\n[Password must have between 6 to 12 characters.]");
-                }
+            if (AuthHandler.validateClientPassword(password)) {
+                isPasswordInvalid = false;
             } else {
-                wasPasswordMessageDisplayed = true;
+                this.out.println("[Invalid password.]\n[Password must have between 6 to 12 characters.]");
+                isPasswordInvalid = true;
             }
-
         } while (isPasswordInvalid);
 
         do {
-            if (!wasRankMessageDisplayed) {
-                this.out.println("[Enter your rank:]");
-            }
+            rank = getUserInput("[Enter your rank:]");
 
-            rank = scanner.nextLine();
-            rank = rank.toLowerCase();
-
-            if (rank.contains("userInput:")) {
-                rank = this.removeUserInputPrefix(rank);
-
-                if (!AuthHandler.validateClientRank(rank)) {
-                    isRankInvalid = true;
-                    this.out.println("[Invalid rank.]\n[Existing ranks: Private, Sergeant or General.]");
-                }
+            if (AuthHandler.validateClientRank(rank)) {
+                isRankInvalid = false;
             } else {
-                wasRankMessageDisplayed = true;
+                this.out.println("[Invalid rank.]\n[Rank must be either General or Soldier.]");
+                isRankInvalid = true;
             }
         } while (isRankInvalid);
 
@@ -372,19 +405,9 @@ public class ServerThreads extends Thread {
     private void loginForm() {
         this.clearTerminal();
 
-        this.out.println("[Enter your username:]");
-        String username = scanner.nextLine();
+        String username = getUserInput("[Enter your username:]");
 
-        if (username.contains("userInput:")) {
-            username = this.removeUserInputPrefix(username);
-        }
-
-        this.out.println("[Enter your password:]");
-        String password = scanner.nextLine();
-
-        if (password.contains("userInput:")) {
-            password = this.removeUserInputPrefix(password);
-        }
+        String password = getUserInput("[Enter your password:]");
 
         ReplyObject isLoggedIn = AuthHandler.verifyLogin(username, password);
 
@@ -396,8 +419,9 @@ public class ServerThreads extends Thread {
             this.out.println("[User logged in successfully.]");
             // Create a thread to increment number of logged in users
             this.loggedInUsers.add(isLoggedIn.getUser());
-            new IncreaseNotificationParametersThread(isLoggedIn.getUser(), loggedInUsers, "ConnectionsMade", true)
-                    .start();
+            // new IncreaseNotificationParametersThread(loggedInUsers, "ConnectionsMade",
+            // true)
+            // .start();
             userMenu(isLoggedIn.getUser());
         }
     }
@@ -408,10 +432,13 @@ public class ServerThreads extends Thread {
      * @param username the username of the user
      */
     private void userMenu(User loggedInUser) {
-        if (!isHeartbeatBeingRead) {
-            isHeartbeatBeingRead = true;
-            new HeartbeatReaderThread(loggedInUser, scanner, loggedInUsers).start();
-        }
+        // if (!isHeartbeatBeingRead) {
+        // isHeartbeatBeingRead = true;
+        // HeartbeatReaderThread heartbeatReaderThread = new
+        // HeartbeatReaderThread(loggedInUser, scanner,
+        // loggedInUsers);
+        // heartbeatReaderThread.start();
+        // }
 
         boolean listening = true;
         int optionSelected = -1;
@@ -420,17 +447,9 @@ public class ServerThreads extends Thread {
             List<Integer> options;
             List<String> messages;
 
-            if (loggedInUser instanceof General) {
-                options = List.of(0, 1, 2, 3, 4, 5, 6);
-                messages = List.of("Back", "Send Message", "Approve Messages", "See all messages",
-                        "Solicitation notifications",
-                        "Approval notifications", "Connection notifications");
-            } else {
-                options = List.of(0, 1, 2, 3, 4, 5);
-                messages = List.of("Back", "Send Message", "Approve Messages", "See all messages",
-                        "Solicitation notifications",
-                        "Approval notifications");
-            }
+            options = List.of(0, 1, 2, 3, 4);
+            messages = List.of("Back", "Send Message", "Approve Messages", "See all messages",
+                    "View Channels");
 
             optionSelected = getMenuOption(options, messages);
 
@@ -456,7 +475,7 @@ public class ServerThreads extends Thread {
                 // Protocolo termina
 
                 // Começa a pedir o titulo e o conteudo da mensagem
-                result = sendMessage(loggedInUser);
+                result = this.sendMessage(loggedInUser, true);
 
                 this.clearTerminal();
 
@@ -468,7 +487,13 @@ public class ServerThreads extends Thread {
 
                 break;
             case 2:
-                loggedInUser.receiveMessages(); // Loads messages into array
+                loggedInUser.receivePersonalMessages(); // Loads messages into array
+
+                if (loggedInUser.getMessages().isEmpty()) {
+                    this.clearTerminal();
+                    this.out.println("[No messages to display.]");
+                    break;
+                }
 
                 result = selectTarget(loggedInUser.getMessages()); // Lists messages
                 messageTitle = result.getMessage();
@@ -489,10 +514,10 @@ public class ServerThreads extends Thread {
                         int selectedOption = getMenuOption(List.of(0, 1, 2), List.of("Back", "Yes", "No"));
 
                         if (selectedOption == 1) {
-                            message.setApproved("Approved by " + loggedInUser.getName());
+                            message.setApproved("Approved by " + loggedInUser.getUsername());
                             message.UpdateEntryInFile();
                             this.out.println("[Message approved successfully.]");
-                            new IncreaseNotificationParametersThread(loggedInUser, loggedInUsers, "ApprovalsMade", true)
+                            new IncreaseNotificationParametersThread(loggedInUsers, "ApprovalsMade", true)
                                     .start();
                         } else if (selectedOption == 2) {
                             this.out.println("[Message not approved.]");
@@ -502,7 +527,7 @@ public class ServerThreads extends Thread {
 
                 break;
             case 3:
-                loggedInUser.receiveMessages(); // Loads messages into array
+                loggedInUser.receivePersonalMessages();
 
                 if (loggedInUser.getMessages().isEmpty()) {
                     this.clearTerminal();
@@ -510,14 +535,13 @@ public class ServerThreads extends Thread {
                     break;
                 }
 
-                result = selectTarget(loggedInUser.getMessages()); // Lists messages
+                result = selectTarget(loggedInUser.getMessages());
                 messageTitle = result.getMessage();
 
                 this.clearTerminal();
 
                 if (!messageTitle.isEmpty()) {
                     Message message = loggedInUser.findMessageByTitle(messageTitle);
-                    // I want to print message information
 
                     if (message != null) {
 
@@ -534,29 +558,264 @@ public class ServerThreads extends Thread {
                 }
                 break;
             case 4:
-                this.out.println("JOIN_CHANNEL:" + NotifierThreads.SOLICITATIONS_MADE_CHANNELADDR);
+                int selectedOption = -1;
 
-                // Listen for inputs from the user
-                listeningToUserInputWhileInChannel(listening);
-                break;
-            case 5:
-                this.out.println("JOIN_CHANNEL:" + NotifierThreads.APPROVALS_MADE_CHANNELADDR);
+                while (optionSelected != 0) {
 
-                // Listen for inputs from the user
-                listeningToUserInputWhileInChannel(listening);
-                break;
-            case 6:
-                if (loggedInUser instanceof General) {
-                    this.out.println("JOIN_CHANNEL:" + NotifierThreads.CONNECTIONS_MADE_CHANNELADDR);
+                    List<String> messages = new ArrayList<String>();
+                    List<Integer> options = new ArrayList<Integer>();
 
-                    // Listen for inputs from the user
-                    listeningToUserInputWhileInChannel(listening);
+                    if (loggedInUser instanceof General) {
+                        messages = List.of("Back", "Join Approvals Notification Channel",
+                                "Join Connections Notification Channel",
+                                "Join Solicitations Notification Channel", "Join a user created channel",
+                                "Create a channel", "Delete a channel");
+                        options = List.of(0, 1, 2, 3, 4, 5, 6);
+                    } else {
+                        messages = List.of("Back", "Join Approvals Notification Channel",
+                                "Join Solicitations Notification Channel", "Join a user created channel");
+                        options = List.of(0, 1, 2, 3);
+                    }
+
+                    selectedOption = getMenuOption(options, messages);
+
+                    communicationChannelsMenu(loggedInUser, selectedOption, createdChannels);
                 }
 
                 break;
             default:
                 break;
         }
+    }
+
+    /**
+     * Method to handle the communication channels menu
+     * 
+     * @param loggedInUser          The logged in user
+     * @param optionSelected        The option selected by the user
+     * @param listOfCreatedChannels The list of created channels
+     */
+    private void communicationChannelsMenu(User loggedInUser, int optionSelected,
+            List<Channel> listOfCreatedChannels) {
+
+        ReplyObject result;
+        String nameOfTheChannel;
+        boolean doesChannelExist;
+
+        switch (optionSelected) {
+            case 1:
+                // Join Approvals Notification Channel
+                this.out.println("JOIN_CHANNEL:" + NotifierThreads.APPROVALS_MADE_CHANNELADDR);
+
+                listeningToUserInputWhileInChannel(true);
+                break;
+            case 2:
+                // Join Connections Notification Channel
+                if (loggedInUser instanceof General) {
+                    this.out.println("JOIN_CHANNEL:" + NotifierThreads.CONNECTIONS_MADE_CHANNELADDR);
+
+                    listeningToUserInputWhileInChannel(true);
+                } else {
+                    this.out.println("JOIN_CHANNEL:" + NotifierThreads.SOLICITATIONS_MADE_CHANNELADDR);
+
+                    listeningToUserInputWhileInChannel(true);
+                }
+
+                break;
+            case 3:
+                // Join Solicitations Notification Channel
+                if (loggedInUser instanceof General) {
+                    this.out.println("JOIN_CHANNEL:" + NotifierThreads.SOLICITATIONS_MADE_CHANNELADDR);
+
+                    listeningToUserInputWhileInChannel(true);
+                } else {
+                    result = selectTarget(listOfCreatedChannels);
+
+                    nameOfTheChannel = result.getMessage();
+
+                    doesChannelExist = ChannelHandler.checkIfChannelExists(nameOfTheChannel);
+
+                    if (doesChannelExist) {
+                        clientJoinedCommunicationChannelMenu(nameOfTheChannel, loggedInUser);
+                    } else {
+                        this.out.println("[Channel not found.]");
+                    }
+                }
+
+                break;
+            case 4:
+                // Join a user created channel
+                result = selectTarget(listOfCreatedChannels);
+
+                nameOfTheChannel = result.getMessage();
+
+                doesChannelExist = ChannelHandler.checkIfChannelExists(nameOfTheChannel);
+
+                if (doesChannelExist) {
+                    optionSelected = -1;
+
+                    while (optionSelected != 0) {
+                        List<String> messages = List.of("Back", "Send Message", "See all messages",
+                                "Reply to a message",
+                                "Leave the channel");
+                        List<Integer> options = List.of(0, 1, 2, 3, 4);
+
+                        optionSelected = getMenuOption(options, messages);
+                        clientJoinedCommunicationChannelMenu(nameOfTheChannel, loggedInUser);
+                    }
+                } else {
+                    this.out.println("[Channel not found.]");
+                }
+
+                break;
+            case 5:
+                if (loggedInUser instanceof General) {
+                    // Create a channel
+                    nameOfTheChannel = getUserInput("[Enter the name of the channel:]");
+
+                    result = ChannelHandler.addChannel(nameOfTheChannel, loggedInUser.getUsername());
+
+                    this.out.println(result.getMessage());
+
+                    if (result.getWasOperationSuccessful()) {
+                        listOfCreatedChannels.add(result.getChannel());
+                    }
+                }
+
+                break;
+            case 6:
+                if (loggedInUser instanceof General) {
+
+                    // Delete a channel
+                    result = selectTarget(listOfCreatedChannels);
+
+                    nameOfTheChannel = result.getMessage();
+
+                    result = ChannelHandler.removeChannel(nameOfTheChannel);
+
+                    if (result.getWasOperationSuccessful()) {
+                        this.out.println("[Channel deleted successfully.]");
+                    } else {
+                        this.out.println("[Channel not found.]");
+                    }
+                }
+
+                break;
+            default:
+                break;
+        }
+
+    }
+
+    /**
+     * Menu that shows the options a user sees upon joining a user created channel
+     * 
+     * @param nameOfTheChannel The name of the channel
+     */
+    private void clientJoinedCommunicationChannelMenu(String nameOfTheChannel, User loggedInUser) {
+        // Display option to send a message
+
+        // Display option to see all messages
+
+        // Display option to reply to a message
+
+        // Display option to leave the channel
+        int optionSelected = -1;
+
+        List<String> messages = List.of("Back", "Send Message", "See all messages", "Reply to a message",
+                "Leave the channel");
+        List<Integer> options = List.of(0, 1, 2, 3, 4);
+
+        optionSelected = getMenuOption(options, messages);
+
+        ReplyObject result;
+
+        switch (optionSelected) {
+            case 1:
+                // Send Message
+                result = this.sendMessage(loggedInUser, false);
+
+                this.clearTerminal();
+
+                if (result.getWasOperationSuccessful()) {
+                    this.out.println(result.getMessage());
+                } else {
+                    this.out.println(result.getMessage());
+                }
+
+                break;
+            case 2:
+                // See all messages
+                loggedInUser.receiveChannelMessages(nameOfTheChannel); // Loads messages into array
+
+                if (loggedInUser.getMessages().isEmpty()) {
+                    this.clearTerminal();
+                    this.out.println("[No messages to display.]");
+                    break;
+                }
+
+                result = selectTarget(loggedInUser.getMessages()); // Lists messages
+
+                String messageTitle = result.getMessage();
+
+                this.clearTerminal();
+
+                if (!messageTitle.isEmpty()) {
+                    Message message = loggedInUser.findMessageByTitle(messageTitle);
+
+                    if (message != null) {
+                        List<Reply> replies = Reply.readRepliesFromFileForMessage(message.getTitle());
+
+                        this.out.println("===============Message_Information===============");
+                        this.out.println("Title: " + message.getTitle());
+                        this.out.println("Content: " + message.getContent());
+                        this.out.println("Sender: " + message.getSender());
+                        this.out.println("Recipient: " + message.getRecipient());
+                        this.out.println("Approved: " + message.getApproved());
+                        this.out.println("=================================================");
+                    } else {
+                        this.out.println("[Message not found...]");
+                    }
+                } else {
+                    this.out.println("[Message not found...]");
+                }
+
+                break;
+            case 3:
+                // Reply to a message
+                loggedInUser.receiveChannelMessages(nameOfTheChannel); // Loads messages into array
+
+                if (loggedInUser.getMessages().isEmpty()) {
+                    this.clearTerminal();
+                    this.out.println("[No messages to display.]");
+                    break;
+                }
+
+                result = selectTarget(loggedInUser.getMessages()); // Lists messages
+
+                messageTitle = result.getMessage();
+
+                this.clearTerminal();
+
+                if (!messageTitle.isEmpty()) {
+                    Message message = loggedInUser.findMessageByTitle(messageTitle);
+
+                    if (message != null) {
+                        this.out.println("===============Message_Information===============");
+                        this.out.println("Title: " + message.getTitle());
+                        this.out.println("Content: " + message.getContent());
+                        this.out.println("=================================================\n");
+
+                        result = this.sendReply(loggedInUser);
+                    }
+                }
+                break;
+            case 4:
+                // Leave the channel
+                this.out.println("LEAVE_CHANNEL:" + nameOfTheChannel);
+                break;
+        }
+
     }
 
     /**
