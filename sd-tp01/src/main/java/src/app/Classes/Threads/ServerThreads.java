@@ -13,8 +13,10 @@ import src.app.Classes.ChannelHandler;
 import src.app.Classes.Models.Channel;
 import src.app.Classes.Models.General;
 import src.app.Classes.Models.Message;
+import src.app.Classes.Models.Private;
 import src.app.Classes.Models.Reply;
 import src.app.Classes.Models.ReplyObject;
+import src.app.Classes.Models.Sergeant;
 import src.app.Classes.Models.User;
 
 import src.app.Interfaces.IGetName;
@@ -161,6 +163,294 @@ public class ServerThreads extends Thread {
         return userInput;
     }
 
+    private boolean checkIfUserKnowsSendProtocol(User loggedInUser, User recipient) {
+        if (loggedInUser instanceof Private && recipient instanceof Private) {
+            userInput = getUserInput("[Capuchin, this is Tamarin. Solicitation from Capuchin to Tamarin.]");
+
+            if (!userInput.equals("Tamarin, this is Capuchin. Affirmative.")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Private && recipient instanceof Sergeant) {
+            userInput = getUserInput("[Capuchin calling Clownfish. Solicitation from Capuchin to Clownfish.]");
+
+            if (!userInput.equals("Clownfish responding to Capuchin. Confirmed.")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Private && recipient instanceof General) {
+            userInput = getUserInput("[Capuchin reaching out to Eagle. Solicitation from Capuchin to Eagle.]");
+
+            if (!userInput.equals("Eagle here, Capuchin. Affirmative.")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Sergeant && recipient instanceof Private) {
+            userInput = getUserInput("[Clownfish, this is Capuchin. Solicitation from Clownfish to Capuchin.]");
+
+            if (!userInput.equals("Capuchin, this is Clownfish. Positive.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Yellow")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Sergeant && recipient instanceof Sergeant) {
+            userInput = getUserInput("[Clownfish to Tamarin. Solicitation from Clownfish to Tamarin.]");
+
+            if (!userInput.equals("Tamarin to Clownfish. Positive.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Chain")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Sergeant && recipient instanceof General) {
+            userInput = getUserInput("[Clownfish to Eagle. Solicitation from Clownfish to Eagle.]");
+
+            if (!userInput.equals("Eagle, this is Clownfish. Positive.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Tire")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof General && recipient instanceof Private) {
+            userInput = getUserInput("[Eagle to Capuchin. Solicitation from Eagle to Capuchin.]");
+
+            if (!userInput.equals("Capuchin, this is Eagle. Acknowledge.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Magenta")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Key]");
+
+            if (!userInput.equals("Code 130")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof General && recipient instanceof Sergeant) {
+            userInput = getUserInput("[Eagle reaching out to Clownfish. Solicitation from Eagle to Clownfish.]");
+
+            if (!userInput.equals("Clownfish, this is Eagle. Acknowledge.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Pink")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Key]");
+
+            if (!userInput.equals("Code 1054")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof General && recipient instanceof General) {
+            userInput = getUserInput("[Eagle to Tamarin. Solicitation from Eagle to Tamarin.]");
+
+            if (!userInput.equals("Tamarin, this is Eagle. Acknowledge.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Truck")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Key]");
+
+            if (!userInput.equals("Code 34")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        }
+
+        return true;
+    }
+
+    /**
+     * Method to check if the user knows the protocol to approve a message
+     * 
+     * @param loggedInUser    Logged in user
+     * @param senderOfMessage Recipient of the message
+     * @return true if the user knows the protocol, false otherwise
+     */
+    private boolean checkIfUserKnowsApproveProtocol(User loggedInUser, User senderOfMessage) {
+        if (loggedInUser instanceof Private && senderOfMessage instanceof Private) {
+            userInput = getUserInput("[Tamarin to Capuchin. Approval of Capuchin-to-Tamarin solicitation.]");
+
+            if (!userInput.equals("Capuchin, this is Tamarin. Affirmative. ")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Private && senderOfMessage instanceof Sergeant) {
+            userInput = getUserInput("[Tamarin to Clownfish. Approval of Tamarin-to-Clownfish solicitation.]");
+
+            if (!userInput.equals("Clownfish, this is Tamarin. Affirmative.")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Private && senderOfMessage instanceof General) {
+            userInput = getUserInput("[Tamarin to Eagle. Approval of Tamarin-to-Eagle solicitation. ]");
+
+            if (!userInput.equals("Eagle, this is Tamarin. Affirmative.")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Sergeant && senderOfMessage instanceof Private) {
+            userInput = getUserInput("[Clownfish to Tamarin. Approval of Clownfish-to-Tamarin solicitation.]");
+
+            if (!userInput.equals("Tamarin, this is Clownfish. Affirmative.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Bicycle")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Sergeant && senderOfMessage instanceof Sergeant) {
+            userInput = getUserInput("[Clownfish to Capuchin. Approval of Clownfish-to-Capuchin solicitation.]");
+
+            if (!userInput.equals("Capuchin, this is Clownfish. Affirmative.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Ice")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof Sergeant && senderOfMessage instanceof General) {
+            userInput = getUserInput("[Clownfish to Eagle. Approval of Clownfish-to-Eagle solicitation.]");
+
+            if (!userInput.equals("Eagle, this is Clownfish. Affirmative.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Brick")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof General && senderOfMessage instanceof Private) {
+            userInput = getUserInput("[Eagle to Tamarin. Approval of Eagle-to-Tamarin solicitation.]");
+
+            if (!userInput.equals("Tamarin, this is Eagle. Affirmative.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Rock")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Key]");
+
+            if (!userInput.equals("Code 754")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof General && senderOfMessage instanceof Sergeant) {
+            userInput = getUserInput("[Eagle to Clownfish. Approval of Eagle-to-Clownfish solicitation.]");
+
+            if (!userInput.equals("Clownfish, this is Eagle. Affirmative.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Hut")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Key]");
+
+            if (!userInput.equals("Code 93")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+
+        } else if (loggedInUser instanceof General && senderOfMessage instanceof General) {
+            userInput = getUserInput("[Eagle to Capuchin. Approval of Eagle-to-Capuchin solicitation. ]");
+
+            if (!userInput.equals("Capuchin, this is Eagle. Affirmative.")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Alias]");
+
+            if (!userInput.equals("Bank")) {
+                return false;
+            }
+
+            userInput = getUserInput("[Key]");
+
+            if (!userInput.equals("Code 568")) {
+                return false;
+            }
+
+            this.out.println("[Details and options, over.]");
+        }
+
+        return true;
+    }
+
     /**
      * Find a user by name in the list of registered users
      * 
@@ -170,6 +460,22 @@ public class ServerThreads extends Thread {
     private User findUserByName(String name) {
         for (User user : registeredUsers) {
             if (user.getName().equals(name)) {
+                return user;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a user by username in the list of registered users
+     * 
+     * @param username the username of the user to find
+     * @return the User object if found, null otherwise
+     */
+    private User findUserByUsername(String username) {
+        for (User user : registeredUsers) {
+            if (user.getUsername().equals(username)) {
                 return user;
             }
         }
@@ -274,42 +580,20 @@ public class ServerThreads extends Thread {
                 if (recipient != null) {
 
                     ///// PROTOCOLS START /////
-                    /*
-                     * if (loggedInUser instanceof Private && recipient instanceof Private) {
-                     * 
-                     * userInput =
-                     * getUserInput("[Capuchin, this is Tamarin. Solicitation from Capuchin to Tamarin.]"
-                     * );
-                     * System.out.println("User input: " + userInput);
-                     * 
-                     * if (!userInput.equals("Tamarin, this is Capuchin. Affirmative.")) {
-                     * break;
-                     * }
-                     * 
-                     * this.out.println("[Details and options, over.]");
-                     * } else
-                     * 
-                     * if (loggedInUser instanceof Private && recipient instanceof Sergeant) {
-                     * 
-                     * userInput =
-                     * getUserInput("[Capuchin calling Clownfish. Solicitation from Capuchin to Clownfish.]"
-                     * );
-                     * System.out.println("User input: " + userInput);
-                     * 
-                     * if (!userInput.equals("Clownfish responding to Capuchin. Confirmed.")) {
-                     * break;
-                     * }
-                     * 
-                     * this.out.println("[Details and options, over.]");
-                     * }
-                     */
+                    boolean doesLoggedInUserKnowSendProtocol = checkIfUserKnowsSendProtocol(loggedInUser, recipient);
                     ///// PROTOCOLS END /////
-                    recipient.registerPersonalMessage(title, content, loggedInUser.getUsername());
 
-                    new IncreaseNotificationParametersThread("numberSolicitations", true)
-                            .start();
+                    if (!doesLoggedInUserKnowSendProtocol) {
+                        return new ReplyObject(false, "[Message not sent. User does not know the protocol.]");
+                    } else {
 
-                    return new ReplyObject(true, "[Message sent successfully.]");
+                        recipient.registerPersonalMessage(title, content, loggedInUser.getUsername());
+
+                        new IncreaseNotificationParametersThread("numberSolicitations", true)
+                                .start();
+
+                        return new ReplyObject(true, "[Message sent successfully.]");
+                    }
                 } else {
                     return new ReplyObject(false, "[User not found.]");
                 }
@@ -596,22 +880,38 @@ public class ServerThreads extends Thread {
                     // I want to change the approved field to "Approved by <username>"
 
                     if (message != null) {
+                        System.out.println("Message: " + message);
+
+                        User senderOfTheMessage = findUserByUsername(message.getSender());
+
                         this.out.println("===============Message_Information===============");
                         this.out.println("Title: " + message.getTitle());
                         this.out.println("Content: " + message.getContent());
                         this.out.println("=================================================\n");
-                        this.out.println("[Do you want to approve this message?]");
 
-                        int selectedOption = getMenuOption(List.of(0, 1, 2), List.of("Back", "Yes", "No"));
+                        ///// PROTOCOLS START /////
+                        boolean doesLoggedInUserKnowApproveProtocol = checkIfUserKnowsApproveProtocol(loggedInUser,
+                                senderOfTheMessage);
+                        ///// PROTOCOLS END /////
 
-                        if (selectedOption == 1) {
-                            message.setApproved("Approved by " + loggedInUser.getUsername());
-                            message.UpdateEntryInFile();
-                            this.out.println("[Message approved successfully.]");
-                            new IncreaseNotificationParametersThread("numberApprovals", true)
-                                    .start();
-                        } else if (selectedOption == 2) {
-                            this.out.println("[Message not approved.]");
+                        if (!doesLoggedInUserKnowApproveProtocol) {
+                            this.out.println("[Message not approved. User does not know the protocol.]");
+                        } else {
+                            this.out.println("[Do you want to approve this message?]");
+
+                            int selectedOption = getMenuOption(List.of(0, 1, 2), List.of("Back", "Yes", "No"));
+
+                            if (selectedOption == 1) {
+                                message.setApproved("Approved by " + loggedInUser.getUsername());
+                                message.UpdateEntryInFile();
+                                this.out.println("[Message approved successfully.]");
+                                new IncreaseNotificationParametersThread("numberApprovals", true)
+                                        .start();
+                            } else if (selectedOption == 2) {
+                                message.setApproved("Not approved by " + loggedInUser.getUsername());
+                                message.UpdateEntryInFile();
+                                this.out.println("[Message not approved.]");
+                            }
                         }
                     }
                 }
@@ -619,8 +919,6 @@ public class ServerThreads extends Thread {
                 break;
             case 3:
                 loggedInUser.receivePersonalMessages();
-
-                System.out.println("Mensagens do utilizador: " + loggedInUser.getMessages());
 
                 if (loggedInUser.getMessages().isEmpty()) {
                     this.clearTerminal();
@@ -699,16 +997,16 @@ public class ServerThreads extends Thread {
         String nameOfTheChannel;
         boolean doesChannelExist;
 
-        System.out.println("Option selected: " + optionSelected);
-
         switch (optionSelected) {
             case 1:
                 // Join Approvals Notification Channel
                 this.out.println("JOIN_CHANNEL:" + NotifierThreads.APPROVALS_MADE_CHANNELADDR);
 
                 listeningToUserInputWhileInChannel(true);
+
                 System.out.println("Returned from listening to user input");
                 System.out.println(this.out.checkError());
+
                 this.out.flush();
                 this.out.println("Returned from listening to user input");
                 break;
@@ -915,6 +1213,7 @@ public class ServerThreads extends Thread {
                 if (loggedInUser.getMessages().isEmpty()) {
                     this.clearTerminal();
                     this.out.println("[No messages to display.]");
+
                     break;
                 }
 
@@ -970,7 +1269,6 @@ public class ServerThreads extends Thread {
 
                 // Create a thread to decrement number of logged in users
             } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }

@@ -151,13 +151,9 @@ public class Message implements IGetName {
                 for (Object message : jsonMessages) {
                     JSONObject jsonMessage = (JSONObject) message;
 
-                    System.out.println(jsonMessage);
-
                     String sender = (String) jsonMessage.get("sender");
                     String recipient = (String) jsonMessage.get("recipient");
                     String title = (String) jsonMessage.get("title");
-
-                    System.out.println("Reached here");
                     String content = (String) jsonMessage.get("content");
                     String approved = (String) jsonMessage.get("approved");
 
@@ -169,11 +165,6 @@ public class Message implements IGetName {
                             content == null ||
                             approved == null ||
                             timestamp == null) {
-                        System.out.println(sender);
-                        System.out.println(recipient);
-                        System.out.println(title);
-                        System.out.println(content);
-                        System.out.println(approved);
                         continue;
                     }
 

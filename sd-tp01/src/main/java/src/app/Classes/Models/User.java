@@ -134,8 +134,10 @@ public abstract class User implements IUser {
      */
     public void registerPersonalMessage(String title, String content, String senderOfTheMessage) {
         // Write to json file the message, the sender and the recipient
+        // General a new Guuid for the channel name
+
         MessageThread messageThread = new MessageThread(
-                new Message(senderOfTheMessage, this.username, "", title, content));
+                new Message(senderOfTheMessage, this.username, null, title, content));
         messageThread.start();
     }
 

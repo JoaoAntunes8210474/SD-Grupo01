@@ -55,9 +55,21 @@ public class MessageThread extends Thread {
 
                 JSONObject jsonMessage = new JSONObject();
                 jsonMessage.put("sender", this.message.getSender());
-                jsonMessage.put("recipient", this.message.getRecipient());
+
+                if (this.message.getRecipient() == null || this.message.getRecipient().isEmpty()) {
+                    jsonMessage.put("recipient", "");
+                } else {
+                    jsonMessage.put("recipient", this.message.getRecipient());
+                }
+
                 jsonMessage.put("title", this.message.getTitle());
-                jsonMessage.put("channel", this.message.getChannel());
+
+                if (this.message.getChannel() == null || this.message.getChannel().isEmpty()) {
+                    jsonMessage.put("channel", "");
+                } else {
+                    jsonMessage.put("channel", this.message.getChannel());
+                }
+
                 jsonMessage.put("content", this.message.getContent());
                 jsonMessage.put("approved", this.message.getApproved());
                 jsonMessage.put("timestamp", this.message.getTimestamp().toString());

@@ -135,6 +135,7 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             byte[] buffer = message.getBytes();
 
             InetAddress group = channelGroups.get("numberApprovals");
+
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12323);
             socket.send(packet);
         } catch (Exception e) {
@@ -168,10 +169,12 @@ public class NotifierThreads extends Thread implements INotifierThreads {
             int numberConnections = Integer.parseInt(jsonStat.get("numberConnections").toString());
 
             String message = "[Number of connections: " + numberConnections + "]";
+
             byte[] buffer = message.getBytes();
 
             InetAddress group = channelGroups.get("numberConnections");
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12322);
+
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, 12323);
             socket.send(packet);
         } catch (Exception e) {
             e.printStackTrace();
@@ -189,7 +192,7 @@ public class NotifierThreads extends Thread implements INotifierThreads {
                 notifyAllConnectionsMadeOnlyToGenerals();
 
                 if (!Thread.interrupted()) {
-                    Thread.sleep(1000);
+                    Thread.sleep(2000);
                 } else {
                     this.stopRunning();
                     System.out.println("Notifier thread interrupted");

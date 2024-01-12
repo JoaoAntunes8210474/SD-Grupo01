@@ -64,7 +64,9 @@ public class Server {
             while (listeningToUsers) {
                 // Accept incoming client connections
                 System.out.println("Waiting for client connection...");
+
                 Socket clientSocket = serverSocket.accept();
+
                 System.out.println("Client connected.");
 
                 // Handle each client connection in a separate thread

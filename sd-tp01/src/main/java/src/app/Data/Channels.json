@@ -1,1 +1,8 @@
-{"channels":[{"creator":"jofilipa","name":"teste"},{"creator":"john","name":"EPIC CHANNEL"}]}
+{
+  "channels": [
+    {
+      "creator": "jofilipa",
+      "name": "teste"
+    }
+  ]
+}

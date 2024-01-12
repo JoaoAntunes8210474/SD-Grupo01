@@ -46,8 +46,6 @@ public class Client {
         try {
             InetAddress groupAddress = InetAddress.getByName(channelName);
             multicastSocket.leaveGroup(groupAddress);
-
-            System.out.println("You left channel " + channelName);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -74,20 +72,28 @@ public class Client {
                     try {
                         String serverMessage = "";
                         while (keepRunning) {
-                            if (joinedNotificationGroup.isEmpty()) {
-                                serverMessage = in.readLine();
-                            }
-
                             if (!joinedNotificationGroup.isEmpty()) {
                                 byte[] buffer = new byte[1024];
                                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+                                System.out.println("Waiting for multicast message...");
                                 multicastSocket.receive(packet);
 
                                 String message = new String(packet.getData(), packet.getOffset(),
                                         packet.getLength());
 
+                                System.out.println(message);
+
                                 // Give serverMessage the value of message
                                 serverMessage = message;
+
+                                System.out.println(message);
+                            }
+
+                            if (joinedNotificationGroup.isEmpty()) {
+                                serverMessage = in.readLine();
+
+                                System.out.println(serverMessage);
                             }
 
                             if (serverMessage.startsWith("JOIN_CHANNEL:")) {
@@ -110,8 +116,6 @@ public class Client {
                                 in.close();
                                 System.exit(0);
                             }
-
-                            System.out.println(serverMessage);
                         }
                     } catch (IOException e) {
                         if (!keepRunning) {
