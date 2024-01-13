@@ -1,4 +1,4 @@
-package src.app.Classes;
+package src.app.Classes.Threads;
 
 import java.io.File;
 import java.io.FileReader;
@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -14,29 +13,25 @@ import org.json.simple.parser.JSONParser;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import src.app.Classes.Models.Message;
+
 public class MessageThread extends Thread {
-    private String sender;
-    private String recipient;
-    private String content;
+    private Message message;
 
     // File path for storing messages
-    private static final String MESSAGE_FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
+    public static final String FILE_PATH = "sd-tp01/src/main/java/src/app/Data/Messages.json";
 
-    public MessageThread(String sender, String recipient, String content) {
-        this.sender = sender;
-        this.recipient = recipient;
-        this.content = content;
+    public MessageThread(Message message) {
+        this.message = message;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
         // Synchronize access to the file to ensure thread safety
         synchronized (MessageThread.class) {
             try {
-                // Create a new message
-                Message message = new Message(sender, recipient, content);
-
-                Path path = Path.of(MESSAGE_FILE_PATH);
+                Path path = Path.of(FILE_PATH);
                 File file = new File(path.toString());
 
                 // Check if the file is empty
@@ -59,10 +54,25 @@ public class MessageThread extends Thread {
                 }
 
                 JSONObject jsonMessage = new JSONObject();
-                jsonMessage.put("sender", message.getSender());
-                jsonMessage.put("recipient", message.getRecipient());
-                jsonMessage.put("content", message.getContent());
-                jsonMessage.put("timestamp", message.getTimestamp().toString());
+                jsonMessage.put("sender", this.message.getSender());
+
+                if (this.message.getRecipient() == null || this.message.getRecipient().isEmpty()) {
+                    jsonMessage.put("recipient", "");
+                } else {
+                    jsonMessage.put("recipient", this.message.getRecipient());
+                }
+
+                jsonMessage.put("title", this.message.getTitle());
+
+                if (this.message.getChannel() == null || this.message.getChannel().isEmpty()) {
+                    jsonMessage.put("channel", "");
+                } else {
+                    jsonMessage.put("channel", this.message.getChannel());
+                }
+
+                jsonMessage.put("content", this.message.getContent());
+                jsonMessage.put("approved", this.message.getApproved());
+                jsonMessage.put("timestamp", this.message.getTimestamp().toString());
 
                 jsonMessages.add(jsonMessage);
 
@@ -77,11 +87,9 @@ public class MessageThread extends Thread {
                 // Append the JSON message to the file
                 FileWriter fileWriter = new FileWriter(file);
                 fileWriter.write(prettyJson);
-                System.out.println("Message sent:\n" + message);
 
                 fileReader.close();
                 fileWriter.close();
-
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (Exception e) {

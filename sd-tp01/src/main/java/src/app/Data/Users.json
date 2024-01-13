@@ -59,6 +59,11 @@
       "password": "romeu",
       "name": "romeu",
       "rank": "private"
+    },
+    {
+      "password": "general",
+      "name": "john",
+      "rank": "general"
     }
   ]
 }

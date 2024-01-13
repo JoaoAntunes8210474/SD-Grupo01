@@ -1,4 +1,4 @@
-package src.app.Classes;
+package src.app.Classes.Models;
 
 /**
  * Sergeant
