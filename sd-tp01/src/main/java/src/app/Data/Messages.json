@@ -1,0 +1,110 @@
+{
+  "messages": [
+    {
+      "approved": "Approved by vfelix",
+      "sender": "john",
+      "recipient": "vfelix",
+      "channel": "",
+      "title": "teste",
+      "content": "teste",
+      "timestamp": "2024-01-12T22:25:50.430300200"
+    },
+    {
+      "approved": "Awaiting approval",
+      "sender": "john",
+      "recipient": "jofilipa",
+      "channel": "",
+      "title": "Hi jojo",
+      "content": "Ora ora ora ora",
+      "timestamp": "2024-01-12T22:28:26.058767900"
+    },
+    {
+      "approved": "Approved by jofilipa",
+      "sender": "john",
+      "recipient": "jofilipa",
+      "channel": "",
+      "title": "ANOTHAR MSGFROM MEEE",
+      "content": "heyyyyyyy dog",
+      "timestamp": "2024-01-12T22:30:39.981490"
+    },
+    {
+      "approved": "",
+      "sender": "jofilipa",
+      "recipient": "",
+      "channel": "teste",
+      "title": "epic mesage",
+      "content": "hyeyeyahfefedaedaWHUAAA TAAA",
+      "timestamp": "2024-01-12T22:32:41.570884"
+    },
+    {
+      "approved": "Awaiting approval",
+      "sender": "john",
+      "recipient": "jofilipa",
+      "channel": "",
+      "title": "teste",
+      "content": "teste",
+      "timestamp": "2024-01-12T22:50:03.662547700"
+    },
+    {
+      "approved": "",
+      "sender": "john",
+      "recipient": "",
+      "channel": "teste27",
+      "title": "Teste",
+      "content": "teste",
+      "timestamp": "2024-01-12T22:52:44.948631100"
+    },
+    {
+      "approved": "Awaiting approval",
+      "sender": "john",
+      "recipient": "vfelix",
+      "channel": "",
+      "title": "teste27",
+      "content": "teste",
+      "timestamp": "2024-01-12T22:59:56.521756"
+    },
+    {
+      "approved": "Awaiting approval",
+      "sender": "john",
+      "recipient": "vitor",
+      "channel": "",
+      "title": "asdasdasdasdasd",
+      "content": "sadasdasdasdas",
+      "timestamp": "2024-01-12T23:01:27.323310800"
+    },
+    {
+      "approved": "Awaiting approval",
+      "sender": "john",
+      "recipient": "vfelix",
+      "channel": "",
+      "title": "tes",
+      "content": "te",
+      "timestamp": "2024-01-12T23:08:10.876819800"
+    },
+    {
+      "approved": "",
+      "sender": "jofilipa",
+      "recipient": "",
+      "channel": "teste",
+      "title": "ortgojeroterjtert",
+      "content": "asjdsajdajsdajsdjas",
+      "timestamp": "2024-01-12T23:15:14.826419500"
+    },
+    {
+      "approved": "Approved by john",
+      "sender": "jofilipa",
+      "recipient": "john",
+      "title": "teste mensagem ao john",
+      "content": "asdasdasdasd",
+      "timestamp": "2024-01-12T23:16:03.890630800"
+    },
+    {
+      "approved": "Approved by jofilipa",
+      "sender": "john",
+      "recipient": "jofilipa",
+      "title": "IOSFERJOTGHOJIHO",
+      "content": "hhehehefsarg",
+      "timestamp": "2024-01-12T23:16:17.750215900"
+    }
+  ]
+}

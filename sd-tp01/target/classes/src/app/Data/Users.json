@@ -1,0 +1,69 @@
+{
+  "users": [
+    {
+      "password": "vitor",
+      "name": "vtitor",
+      "rank": "private"
+    },
+    {
+      "password": "joao",
+      "name": "joaao",
+      "rank": "private"
+    },
+    {
+      "password": "filipa",
+      "name": "jofilipa",
+      "rank": "general"
+    },
+    {
+      "password": "joao",
+      "name": "joao",
+      "rank": "private"
+    },
+    {
+      "password": "vitor",
+      "name": "vitor",
+      "rank": "private"
+    },
+    {
+      "password": "vitor",
+      "name": "dviotr",
+      "rank": "private"
+    },
+    {
+      "password": "felix",
+      "name": "vfelix",
+      "rank": "private"
+    },
+    {
+      "password": "pedroro",
+      "name": "pedroro",
+      "rank": "private"
+    },
+    {
+      "password": "pedro",
+      "name": "pedro",
+      "rank": "private"
+    },
+    {
+      "password": "serafim",
+      "name": "sre",
+      "rank": "private"
+    },
+    {
+      "password": "batista",
+      "name": "batista",
+      "rank": "private"
+    },
+    {
+      "password": "romeu",
+      "name": "romeu",
+      "rank": "private"
+    },
+    {
+      "password": "general",
+      "name": "john",
+      "rank": "general"
+    }
+  ]
+}
